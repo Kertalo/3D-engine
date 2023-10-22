@@ -21,18 +21,102 @@ namespace Rogalik_s_3D
             InitializeComponent();
             map = new Bitmap(pictureBox.Width, pictureBox.Height);
             graphics = Graphics.FromImage(map);
-            Polygon polygon1 = new(new PointXYZ[3]
-            { new PointXYZ(100, 0, 0), new PointXYZ(-100, 0, 0), new PointXYZ(0, 0, 100) });
-            Polygon polygon2 = new(new PointXYZ[3]
-            { new PointXYZ(100, 0, 0), new PointXYZ(-100, 0, 0), new PointXYZ(0, 200, 0) });
-            Polygon polygon3 = new(new PointXYZ[3]
-            { new PointXYZ(100, 0, 0), new PointXYZ(0, 0, 100), new PointXYZ(0, 200, 0) });
-            Polygon polygon4 = new(new PointXYZ[3]
-            { new PointXYZ(-100, 0, 0), new PointXYZ(0, 0, 100), new PointXYZ(0, 200, 0) });
-            Polygon[] polygons = new Polygon[] { polygon1, polygon2, polygon3, polygon4 };
-            Polyhedron polyhedron = new Polyhedron(polygons, new PointXYZ(0, 0, 0));
-            polyhedrons.Add(polyhedron);
+            
+            polyhedrons.Add(Tetrahedron(200, new PointXYZ(0, 0, 100)));
             ShowPolyhedrons();
+        }
+
+        private Polyhedron Tetrahedron(float side, PointXYZ point)
+        {
+            float halfSide = side / 2;
+            float upY = (float)Math.Sqrt(6) / 4 * side;
+            float downY = (float)(1 / (2 * Math.Sqrt(6))) * side;
+            side = (float)(1 / (2 * Math.Sqrt(3))) * side;
+
+            PointXYZ[] points = new PointXYZ[4];
+            points[0] = new PointXYZ(-halfSide, -downY, -side);
+            points[1] = new PointXYZ(halfSide, -downY, -side);
+            points[2] = new PointXYZ(0, -downY, 2 * side);
+            points[3] = new PointXYZ(0, upY, 0);
+
+            Polygon[] polygons = new Polygon[4];
+            polygons[0] = new(new PointXYZ[3]
+                { points[0], points[1], points[2] });
+            polygons[1] = new(new PointXYZ[3]
+                { points[0], points[1], points[3] });
+            polygons[2] = new(new PointXYZ[3]
+                { points[1], points[2], points[3] });
+            polygons[3] = new(new PointXYZ[3]
+                { points[2], points[0], points[2] });
+
+            Polyhedron polyhedron = new(polygons, point);
+            return polyhedron;
+        }
+
+        private Polyhedron Hexahedron(float side, PointXYZ point)
+        {
+            side = side / 2;
+
+            PointXYZ[] points = new PointXYZ[8];
+            points[0] = new PointXYZ(-side, -side, -side);
+            points[1] = new PointXYZ(side, -side, -side);
+            points[2] = new PointXYZ(side, -side, side);
+            points[3] = new PointXYZ(-side, -side, side);
+            points[4] = new PointXYZ(-side, side, -side);
+            points[5] = new PointXYZ(side, side, -side);
+            points[6] = new PointXYZ(side, side, side);
+            points[7] = new PointXYZ(-side, side, side);
+
+            Polygon[] polygons = new Polygon[6];
+            polygons[0] = new(new PointXYZ[4]
+                { points[0], points[1], points[2], points[3] });
+            polygons[1] = new(new PointXYZ[4]
+                { points[0], points[1], points[5], points[4] });
+            polygons[2] = new(new PointXYZ[4]
+                { points[0], points[3], points[7], points[4] });
+            polygons[3] = new(new PointXYZ[4]
+                { points[1], points[2], points[6], points[5] });
+            polygons[4] = new(new PointXYZ[4]
+                { points[2], points[3], points[7], points[6] });
+            polygons[5] = new(new PointXYZ[4]
+                { points[4], points[5], points[6], points[7] });
+            
+            Polyhedron polyhedron = new(polygons, point);
+            return polyhedron;
+        }
+
+        private Polyhedron Octahedron(float side, PointXYZ point)
+        {
+            side = (float)Math.Sqrt(side * side / 2);
+
+            PointXYZ[] points = new PointXYZ[6];
+            points[0] = new PointXYZ(0, 0, -side);
+            points[1] = new PointXYZ(side, 0, 0);
+            points[2] = new PointXYZ(0, 0, side);
+            points[3] = new PointXYZ(-side, 0, 0);
+            points[4] = new PointXYZ(0, side, 0);
+            points[5] = new PointXYZ(0, -side, 0);
+
+            Polygon[] polygons = new Polygon[8];
+            polygons[0] = new(new PointXYZ[3]
+                { points[0], points[1], points[4] });
+            polygons[1] = new(new PointXYZ[3]
+                { points[1], points[2], points[4] });
+            polygons[2] = new(new PointXYZ[3]
+                { points[2], points[3], points[4] });
+            polygons[3] = new(new PointXYZ[3]
+                { points[3], points[0], points[4] });
+            polygons[4] = new(new PointXYZ[3]
+                { points[0], points[1], points[5] });
+            polygons[5] = new(new PointXYZ[3]
+                { points[1], points[2], points[5] });
+            polygons[6] = new(new PointXYZ[3]
+                { points[2], points[3], points[5] });
+            polygons[7] = new(new PointXYZ[3]
+                { points[3], points[0], points[5] });
+            
+            Polyhedron polyhedron = new(polygons, point);
+            return polyhedron;
         }
 
         private void DrawLine(Line line, PointXYZ point)
@@ -51,8 +135,8 @@ namespace Rogalik_s_3D
                 (point.z + line.point1.z), map.Height / 2 -
                 (point.y + line.point1.y) / (point.z + line.point1.z));
             PointF point2 = new(map.Width / 2 + (point.x + line.point2.x) /
-                (point.z + line.point1.z), map.Height / 2 -
-                (point.y + line.point2.y) / (point.z + line.point1.z));
+                (point.z + line.point2.z), map.Height / 2 -
+                (point.y + line.point2.y) / (point.z + line.point2.z));
 
             graphics.DrawLine(pen, point1, point2);
         }
@@ -167,8 +251,8 @@ namespace Rogalik_s_3D
                 Shift(ref polyhedron, dx, -dy);
             else if (state == State.Rotation)
             {
-                Rotate(ref polyhedron, dx / 3000, 0);
-                Rotate(ref polyhedron, dy / 3000, 1);
+                Rotate(ref polyhedron, dy / 3000, 0);
+                Rotate(ref polyhedron, dx / 3000, 1);
             }
             else
                 Scale(ref polyhedron, dx < 0 ? 1 / (1 + (-dx / 100)) : 1 + dx / 100);
