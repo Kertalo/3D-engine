@@ -315,6 +315,7 @@ namespace Rogalik_s_3D
                 }
                 newPolyhedrons.Add(new Polyhedron(newPolygons, point));
             }
+
             var sf = (float)Math.Sqrt(1.0 / 3.0);
             var cf = (float)Math.Sqrt(2.0 / 3.0);
             var sp = (float)Math.Sqrt(1.0 / 2.0);
@@ -323,25 +324,32 @@ namespace Rogalik_s_3D
             float[,] matrix = new float[4, 4];
             matrix[0, 0] = cp;
             matrix[0, 1] = sf * sp;
-            matrix[0, 2] = 0;
-            matrix[0, 3] = 0;
-            matrix[1, 0] = 0;
             matrix[1, 1] = cf;
-            matrix[1, 2] = 0;
-            matrix[1, 3] = 0;
             matrix[2, 0] = sp;
             matrix[2, 1] = -sf * cp;
-            matrix[2, 2] = 0;
-            matrix[2, 3] = 0;
-            matrix[3, 0] = 0;
-            matrix[3, 1] = 0;
-            matrix[3, 2] = 0;
             matrix[3, 3] = 1;
 
-            foreach (var polygon in polyhedron.polygons)
-                for (int i = 0; i < polygon.lines.Length; i++)
-                    polygon.ChangePoint(i, Multiplication(
-                        polygon.lines[i].point1, matrix));
+            foreach (var polyhedron in newPolyhedrons)
+                foreach (var polygon in polyhedron.polygons)
+                {
+                    for (int i = 0; i < polygon.lines.Length; i++)
+                        polygon.ChangePoint(i, Multiplication(
+                            polygon.lines[i].point1, matrix));
+                    foreach (var line in polygon.lines)
+                        DrawLine(line, polyhedron.point);
+                }
+
+            int cathet = (int)Math.Sqrt(Math.Pow(map.Width / 2, 2) / 3);
+            Point xyz = new(map.Width / 2, map.Height / 2);
+            Point x = new(map.Width, map.Height / 2 + cathet);
+            Point y = new(map.Width / 2, 0);
+            Point z = new(0, map.Height / 2 + cathet);
+
+            graphics.DrawLine(axes, xyz, x);
+            graphics.DrawLine(axes, xyz, y);
+            graphics.DrawLine(axes, xyz, z);
+
+            pictureBox.Image = map;
         }
 
         void PerspectiveProjection()
@@ -411,8 +419,6 @@ namespace Rogalik_s_3D
                 textZ1.Enabled = true;
                 textZ2.Enabled = true;
             }
-            else if (state == State.ToAxon)
-                buttonToAxonometric.Enabled = true;
             polyhedrons[index] = polyhedron;
             ShowPolyhedrons();
             mousePosition = e.Location;
