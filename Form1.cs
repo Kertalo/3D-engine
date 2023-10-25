@@ -1,5 +1,8 @@
+using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.Numerics;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Rogalik_s_3D
@@ -10,8 +13,10 @@ namespace Rogalik_s_3D
         Graphics graphics;
         Pen pen = new Pen(Color.Black, 1);
 
-        enum State { Position, Rotation, Scale }
+        enum State { Position, Rotation, Scale, Reflection, RotationAroundLine, ToAxon }
+        enum Plane { XY, YZ, XZ }
         State state = State.Position;
+        Plane plane = Plane.XY;
         PointF mousePosition;
         List<Polyhedron> polyhedrons = new List<Polyhedron>();
         bool isMouseDown = false;
@@ -21,7 +26,7 @@ namespace Rogalik_s_3D
             InitializeComponent();
             map = new Bitmap(pictureBox.Width, pictureBox.Height);
             graphics = Graphics.FromImage(map);
-            
+
             polyhedrons.Add(Tetrahedron(200, new PointXYZ(0, 0, 100)));
             ShowPolyhedrons();
         }
@@ -80,7 +85,7 @@ namespace Rogalik_s_3D
                 { points[2], points[3], points[7], points[6] });
             polygons[5] = new(new PointXYZ[4]
                 { points[4], points[5], points[6], points[7] });
-            
+
             Polyhedron polyhedron = new(polygons, point);
             return polyhedron;
         }
@@ -114,7 +119,7 @@ namespace Rogalik_s_3D
                 { points[2], points[3], points[5] });
             polygons[7] = new(new PointXYZ[3]
                 { points[3], points[0], points[5] });
-            
+
             Polyhedron polyhedron = new(polygons, point);
             return polyhedron;
         }
@@ -215,6 +220,103 @@ namespace Rogalik_s_3D
                         polygon.lines[i].point1, matrix));
         }
 
+        void Reflection(ref Polyhedron polyhedron)
+        {
+            float[,] matrix = new float[4, 4];
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                    if (i == j)
+                        matrix[i, j] = 1;
+                    else
+                        matrix[i, j] = 0;
+
+            if (plane == Plane.XY)
+                matrix[2, 2] *= -1;
+            else if (plane == Plane.YZ)
+                matrix[0, 0] *= -1;
+            else if (plane == Plane.XZ)
+                matrix[1, 1] *= -1;
+
+            foreach (var polygon in polyhedron.polygons)
+                for (int i = 0; i < polygon.lines.Length; i++)
+                    polygon.ChangePoint(i, Multiplication(
+                        polygon.lines[i].point1, matrix));
+        }
+
+        void RotationAroundLine(ref Polyhedron polyhedron, PointXYZ point1, PointXYZ point2, int angle)
+        {
+            PointXYZ vector = new PointXYZ(point2.x - point1.x,
+                point2.y - point1.y,
+                point2.z - point1.z);
+
+            double length = Math.Sqrt((point2.x - point1.x) * (point2.x - point1.x)
+                + (point2.y - point1.y) * (point2.y - point1.y)
+                + (point2.z - point1.z) * (point2.z - point1.z));
+
+            PointXYZ normal_vector = new PointXYZ((float)(vector.x / length),
+                (float)(vector.y / length), (float)(vector.z / length));
+
+            double angleSin = Math.Sin(angle * Math.PI / 180);
+            double angleCos = Math.Cos(angle * Math.PI / 180);
+
+            float[,] matrix = new float[4, 4];
+            float l = normal_vector.x;
+            float m = normal_vector.y;
+            float n = normal_vector.z;
+            matrix[0, 0] = (float)(l * l + angleCos * (1 - l * l));
+            matrix[0, 1] = (float)(l * (1 - angleCos) * m + n * angleSin);
+            matrix[0, 2] = (float)(l * (1 - angleCos) * n - m * angleSin);
+            matrix[0, 3] = 0;
+            matrix[1, 0] = (float)(l * (1 - angleCos) * m - n * angleSin);
+            matrix[1, 1] = (float)(m * m + angleCos * (1 - m * m));
+            matrix[1, 2] = (float)(m * (1 - angleCos) * n + l * angleSin);
+            matrix[1, 3] = 0;
+            matrix[2, 0] = (float)(l * (1 - angleCos) * n + m * angleSin);
+            matrix[2, 1] = (float)(m * (1 - angleCos) * n - l * angleSin);
+            matrix[2, 2] = (float)(n * n + angleCos * (1 - n * n));
+            matrix[2, 3] = 0;
+            matrix[3, 0] = 0;
+            matrix[3, 1] = 0;
+            matrix[3, 2] = 0;
+            matrix[3, 3] = 1;
+
+            foreach (var polygon in polyhedron.polygons)
+                for (int i = 0; i < polygon.lines.Length; i++)
+                    polygon.ChangePoint(i, Multiplication(
+                        polygon.lines[i].point1, matrix));
+        }
+
+        void ToAxonometric(ref Polyhedron polyhedron)
+        {
+            var sf = (float)Math.Sqrt(1.0 / 3.0);
+            var cf = (float)Math.Sqrt(2.0 / 3.0);
+            var sp = (float)Math.Sqrt(1.0 / 2.0);
+            var cp = (float)Math.Sqrt(1.0 / 2.0);
+
+            float[,] matrix = new float[4, 4];
+            matrix[0, 0] = cp;
+            matrix[0, 1] = sf * sp;
+            matrix[0, 2] = 0;
+            matrix[0, 3] = 0;
+            matrix[1, 0] = 0;
+            matrix[1, 1] = cf;
+            matrix[1, 2] = 0;
+            matrix[1, 3] = 0;
+            matrix[2, 0] = sp;
+            matrix[2, 1] = -sf * cp;
+            matrix[2, 2] = 0;
+            matrix[2, 3] = 0;
+            matrix[3, 0] = 0;
+            matrix[3, 1] = 0;
+            matrix[3, 2] = 0;
+            matrix[3, 3] = 1;
+
+            foreach (var polygon in polyhedron.polygons)
+                for (int i = 0; i < polygon.lines.Length; i++)
+                    polygon.ChangePoint(i, Multiplication(
+                        polygon.lines[i].point1, matrix));
+        }
+
         private void ShowPolyhedrons()
         {
             graphics.Clear(Color.White);
@@ -254,8 +356,24 @@ namespace Rogalik_s_3D
                 Rotate(ref polyhedron, dy / 3000, 0);
                 Rotate(ref polyhedron, dx / 3000, 1);
             }
-            else
+            else if (state == State.Scale)
                 Scale(ref polyhedron, dx < 0 ? 1 / (1 + (-dx / 100)) : 1 + dx / 100);
+            else if (state == State.Reflection)
+                buttonReflect.Enabled = true;
+            else if (state == State.RotationAroundLine)
+            {
+                buttonRotation.Enabled = true;
+                textAngel.Enabled = true;
+                textX1.Enabled = true;
+                textX2.Enabled = true;
+                textY1.Enabled = true;
+                textY2.Enabled = true;
+                textZ1.Enabled = true;
+                textZ2.Enabled = true;
+            }
+            else if (state == State.ToAxon)
+                buttonToAxonometric.Enabled = true;
+
             polyhedrons[0] = polyhedron;
             ShowPolyhedrons();
             mousePosition = e.Location;
@@ -274,6 +392,65 @@ namespace Rogalik_s_3D
                 state = State.Rotation;
             else if (e.KeyCode == Keys.D)
                 state = State.Scale;
+            else if (e.KeyCode == Keys.F)
+                state = State.Reflection;
+            else if (e.KeyCode == Keys.G)
+                state = State.RotationAroundLine;
+            else if (e.KeyCode == Keys.H)
+                state = State.ToAxon;
+            else if (e.KeyCode == Keys.D1)
+                plane = Plane.XY;
+            else if (e.KeyCode == Keys.D2)
+                plane = Plane.YZ;
+            else if (e.KeyCode == Keys.D3)
+                plane = Plane.XZ;
+
+        }
+
+        private void ButtonRotateAroundLine(object sender, EventArgs e)
+        {
+            Polyhedron polyhedron = polyhedrons[0];
+
+            PointXYZ point1 = new PointXYZ();
+            PointXYZ point2 = new PointXYZ();
+            int angel = int.Parse(textAngel.Text);
+            point1.x = int.Parse(textX1.Text);
+            point1.y = int.Parse(textY1.Text);
+            point1.z = int.Parse(textZ1.Text);
+            point2.x = int.Parse(textX2.Text);
+            point2.y = int.Parse(textY2.Text);
+            point2.z = int.Parse(textZ2.Text);
+            RotationAroundLine(ref polyhedron, point1, point2, angel);
+
+            polyhedrons[0] = polyhedron;
+            ShowPolyhedrons();
+            buttonRotation.Enabled = false;
+            textX1.Enabled = false;
+            textX2.Enabled = false;
+            textY1.Enabled = false;
+            textY2.Enabled = false;
+            textZ1.Enabled = false;
+            textZ2.Enabled = false;
+            textAngel.Enabled = false;
+        }
+
+        private void Buttonreflect(object sender, EventArgs e)
+        {
+            Polyhedron polyhedron = polyhedrons[0];
+            if (state == State.Reflection)
+                Reflection(ref polyhedron);
+            polyhedrons[0] = polyhedron;
+            ShowPolyhedrons();
+            buttonReflect.Enabled = false;
+        }
+
+        private void ButtonToAxonometric(object sender, EventArgs e)
+        {
+            Polyhedron polyhedron = polyhedrons[0];
+            ToAxonometric(ref polyhedron);
+            polyhedrons[0] = polyhedron;
+            ShowPolyhedrons();
+            buttonToAxonometric.Enabled = false;
         }
     }
 
