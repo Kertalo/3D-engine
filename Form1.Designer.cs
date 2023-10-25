@@ -45,7 +45,6 @@
             label7 = new Label();
             buttonRotation = new Button();
             buttonReflect = new Button();
-            buttonToAxonometric = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             SuspendLayout();
             // 
@@ -201,23 +200,11 @@
             buttonReflect.UseVisualStyleBackColor = true;
             buttonReflect.Click += Buttonreflect;
             // 
-            // buttonToAxonometric
-            // 
-            buttonToAxonometric.Enabled = false;
-            buttonToAxonometric.Location = new Point(12, 181);
-            buttonToAxonometric.Name = "buttonToAxonometric";
-            buttonToAxonometric.Size = new Size(63, 29);
-            buttonToAxonometric.TabIndex = 17;
-            buttonToAxonometric.Text = "Axon";
-            buttonToAxonometric.UseVisualStyleBackColor = true;
-            buttonToAxonometric.Click += ButtonToAxonometric;
-            // 
             // Form
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(982, 653);
-            Controls.Add(buttonToAxonometric);
             Controls.Add(buttonReflect);
             Controls.Add(buttonRotation);
             Controls.Add(label7);
@@ -262,6 +249,5 @@
         private Label label7;
         private Button buttonRotation;
         private Button buttonReflect;
-        private Button buttonToAxonometric;
     }
 }
