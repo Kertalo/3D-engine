@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Drawing;
 
 namespace Rogalik_s_3D
 {
@@ -19,7 +20,7 @@ namespace Rogalik_s_3D
         Pen axes = new Pen(Color.Black, 1);
 
         enum State { Position, Rotation, Scale, Reflection, RotationAroundLine, ToAxon }
-        enum Plane { XY, YZ, XZ }
+        enum Plane { XY, YZ, XZ, XYZ }
         State state = State.Position;
         Plane plane = Plane.XY;
         PointF mousePosition;
@@ -33,7 +34,7 @@ namespace Rogalik_s_3D
             InitializeComponent();
             map = new Bitmap(pictureBox.Width, pictureBox.Height);
             graphics = Graphics.FromImage(map);
-            polyhedrons.Add(Tetrahedron(200, new PointXYZ(0, 0, 100)));
+            polyhedrons.Add(Hexahedron(200, new PointXYZ(0, 0, 200)));
             ShowPolyhedrons();
         }
 
@@ -145,18 +146,6 @@ namespace Rogalik_s_3D
             graphics.DrawLine(pen, point1, point2);
         }
 
-        private void DrawLine2(Line line, PointXYZ point)
-        {
-            PointF point1 = new(map.Width / 2 + (point.x + line.point1.x) /
-                (point.z + line.point1.z), map.Height / 2 -
-                (point.y + line.point1.y) / (point.z + line.point1.z));
-            PointF point2 = new(map.Width / 2 + (point.x + line.point2.x) /
-                (point.z + line.point2.z), map.Height / 2 -
-                (point.y + line.point2.y) / (point.z + line.point2.z));
-
-            graphics.DrawLine(pen, point1, point2);
-        }
-
         PointXYZ Multiplication(PointXYZ point, float[,] matrix)
         {
             float[] newPoint = new float[4];
@@ -183,27 +172,28 @@ namespace Rogalik_s_3D
             polyhedron.point = Multiplication(polyhedron.point, matrix);
         }
 
-        void Rotate(ref Polyhedron polyhedron, float rotate, int xyz)
+        void Rotate(ref Polyhedron polyhedron, float rotate, Plane xyz)
         {
             float[,] matrix = new float[4, 4];
-            matrix[xyz, xyz] = 1;
+            int xyzI = xyz == Plane.XY ? 0 : xyz == Plane.YZ ? 1 : 2;
+            matrix[xyzI, xyzI] = 1;
             matrix[3, 3] = 1;
             double angle = rotate * 180 / Math.PI;
-            if (xyz == 0)
+            if (xyz == Plane.XY)
             {
                 matrix[1, 1] = (float)Math.Cos(angle);
                 matrix[2, 2] = (float)Math.Cos(angle);
                 matrix[2, 1] = (float)Math.Sin(angle);
                 matrix[1, 2] = -(float)Math.Sin(angle);
             }
-            if (xyz == 1)
+            if (xyz == Plane.YZ)
             {
                 matrix[0, 0] = (float)Math.Cos(-angle);
                 matrix[2, 2] = (float)Math.Cos(-angle);
                 matrix[2, 0] = (float)Math.Sin(-angle);
                 matrix[0, 2] = -(float)Math.Sin(-angle);
             }
-            if (xyz == 2)
+            if (xyz == Plane.XZ)
             {
                 matrix[0, 0] = (float)Math.Cos(angle);
                 matrix[1, 1] = (float)Math.Cos(angle);
@@ -217,12 +207,20 @@ namespace Rogalik_s_3D
                         polygon.lines[i].point1, matrix));
         }
 
-        void Scale(ref Polyhedron polyhedron, float scale)
+        void Scale(ref Polyhedron polyhedron, float scale, Plane xyz)
         {
             float[,] matrix = new float[4, 4];
-            matrix[0, 0] = scale;
-            matrix[1, 1] = scale;
-            matrix[2, 2] = scale;
+            int xyzI = xyz == Plane.XY ? 0 : xyz == Plane.YZ ? 1 : 2;
+            matrix[0, 0] = 1;
+            matrix[1, 1] = 1;
+            matrix[2, 2] = 1;
+            matrix[xyzI, xyzI] = scale;
+            if (xyz == Plane.XYZ)
+            {
+                matrix[0, 0] = scale;
+                matrix[1, 1] = scale;
+                matrix[2, 2] = scale;
+            }
             matrix[3, 3] = 1;
 
             foreach (var polygon in polyhedron.polygons)
@@ -352,12 +350,57 @@ namespace Rogalik_s_3D
             pictureBox.Image = map;
         }
 
+        PointXYZ MultiplicationP(PointXYZ point, float[,] matrix)
+        {
+            float[] newPoint = new float[4];
+            float[] pointArray = new float[]
+                { point.x, point.y, point.z, 1 };
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                    newPoint[i] += pointArray[j] * matrix[j, i];
+            return new PointXYZ(newPoint[0] / newPoint[3], newPoint[1] / newPoint[3], newPoint[2]);
+        }
+
         void PerspectiveProjection()
         {
-            foreach (var polyhedron in polyhedrons)
+            List<Polyhedron> newPolyhedrons = new List<Polyhedron>();
+            for (int i = 0; i < polyhedrons.Count; i++)
+            {
+                var point = new PointXYZ(polyhedrons[i].point);
+                var newPolygons = new Polygon[polyhedrons[i].polygons.Length];
+                for (int j = 0; j < newPolygons.Length; j++)
+                {
+                    var newLines = new Line[polyhedrons[i].polygons[j].lines.Length];
+                    for (int l = 0; l < newLines.Length; l++)
+                        newLines[l] = new Line(
+                            new(polyhedrons[i].polygons[j].lines[l].point1),
+                            new(polyhedrons[i].polygons[j].lines[l].point2));
+                    newPolygons[j] = new Polygon(newLines);
+                }
+                newPolyhedrons.Add(new Polyhedron(newPolygons, point));
+            }
+
+            float[,] matrix = new float[4, 4];
+            matrix[0, 0] = 1;
+            matrix[1, 1] = 1;
+            matrix[3, 2] = -1 / 2000;
+            matrix[3, 3] = 1;
+
+            foreach (var polyhedron in newPolyhedrons)
                 foreach (var polygon in polyhedron.polygons)
+                {
+                    for (int i = 0; i < polygon.lines.Length; i++)
+                    {
+                        matrix[2, 3] = -1 / (polyhedron.point.z +
+                            polygon.lines[i].point1.z);
+                        polygon.ChangePoint(i, MultiplicationP(
+                            polygon.lines[i].point1, matrix));
+                    }
+                        
                     foreach (var line in polygon.lines)
                         DrawLine(line, polyhedron.point);
+                }
+
             Point xy = new(map.Width / 2, map.Height / 2);
             Point x = new(map.Width, map.Height / 2);
             Point y = new(map.Width / 2, 0);
@@ -401,11 +444,18 @@ namespace Rogalik_s_3D
                 Shift(ref polyhedron, dx, -dy);
             else if (state == State.Rotation)
             {
-                Rotate(ref polyhedron, dy / 3000, 0);
-                Rotate(ref polyhedron, dx / 3000, 1);
+                if (plane == Plane.XYZ)
+                {
+                    Rotate(ref polyhedron, -dy / 3000, Plane.XY);
+                    Rotate(ref polyhedron, dx / 3000, Plane.YZ);
+                }
+                else
+                    Rotate(ref polyhedron, (dx + dy) / 3000, plane);
             }
             else if (state == State.Scale)
-                Scale(ref polyhedron, dx < 0 ? 1 / (1 + (-dx / 100)) : 1 + dx / 100);
+                Scale(ref polyhedron, (dx + dy) < 0 ? 1 / (1 + 
+                    (-(dx - dy) / 100)) : 1 + (dx - dy) / 100,
+                    plane);
             else if (state == State.Reflection)
                 buttonReflect.Enabled = true;
             else if (state == State.RotationAroundLine)
@@ -434,11 +484,11 @@ namespace Rogalik_s_3D
             if (polyhedrons.Count == 0)
                 index = 0;
             if (polyhedron == 0)
-                polyhedrons.Add(Tetrahedron(200, new PointXYZ(0, 0, 0)));
+                polyhedrons.Add(Tetrahedron(200, new PointXYZ(0, 0, 200)));
             else if (polyhedron == 1)
-                polyhedrons.Add(Hexahedron(200, new PointXYZ(0, 0, 0)));
+                polyhedrons.Add(Hexahedron(200, new PointXYZ(0, 0, 200)));
             else if (polyhedron == 2)
-                polyhedrons.Add(Octahedron(200, new PointXYZ(0, 0, 0)));
+                polyhedrons.Add(Octahedron(200, new PointXYZ(0, 0, 200)));
             ShowPolyhedrons();
         }
 
@@ -462,6 +512,8 @@ namespace Rogalik_s_3D
                 plane = Plane.YZ;
             else if (e.KeyCode == Keys.D3)
                 plane = Plane.XZ;
+            else if (e.KeyCode == Keys.D4)
+                plane = Plane.XYZ;
             else if (e.KeyCode == Keys.Q)
                 AddPolyhedron(0);
             else if (e.KeyCode == Keys.W)
