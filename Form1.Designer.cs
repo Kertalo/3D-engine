@@ -51,6 +51,7 @@
             download = new Button();
             upload = new Button();
             panel2 = new Panel();
+            graphSplit = new TextBox();
             graphY2 = new TextBox();
             graphY1 = new TextBox();
             graphX2 = new TextBox();
@@ -71,6 +72,7 @@
             // 
             // pictureBox
             // 
+            pictureBox.BackColor = Color.DimGray;
             pictureBox.BackgroundImageLayout = ImageLayout.None;
             pictureBox.BorderStyle = BorderStyle.FixedSingle;
             pictureBox.Cursor = Cursors.Cross;
@@ -292,6 +294,7 @@
             // 
             // panel2
             // 
+            panel2.Controls.Add(graphSplit);
             panel2.Controls.Add(graphY2);
             panel2.Controls.Add(graphY1);
             panel2.Controls.Add(graphX2);
@@ -302,6 +305,13 @@
             panel2.Name = "panel2";
             panel2.Size = new Size(239, 128);
             panel2.TabIndex = 38;
+            // 
+            // graphSplit
+            // 
+            graphSplit.Location = new Point(141, 96);
+            graphSplit.Name = "graphSplit";
+            graphSplit.Size = new Size(55, 27);
+            graphSplit.TabIndex = 38;
             // 
             // graphY2
             // 
@@ -491,5 +501,6 @@
         private Button delete;
         private Button create3d;
         private Button draw;
+        private TextBox graphSplit;
     }
 }
