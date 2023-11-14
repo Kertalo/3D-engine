@@ -45,8 +45,8 @@
             pY = new TextBox();
             transform = new Label();
             pX = new TextBox();
-            perspective = new Button();
             axonometric = new Button();
+            perspective = new Button();
             comboBox = new ComboBox();
             download = new Button();
             upload = new Button();
@@ -65,6 +65,7 @@
             rotationSplit = new TextBox();
             label3 = new Label();
             createRotation = new Button();
+            transformOk = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -165,6 +166,7 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(transformOk);
             panel1.Controls.Add(rZ);
             panel1.Controls.Add(rY);
             panel1.Controls.Add(rX);
@@ -232,29 +234,29 @@
             pX.Size = new Size(55, 27);
             pX.TabIndex = 31;
             // 
-            // perspective
-            // 
-            perspective.BackgroundImage = (Image)resources.GetObject("perspective.BackgroundImage");
-            perspective.BackgroundImageLayout = ImageLayout.Stretch;
-            perspective.FlatStyle = FlatStyle.Flat;
-            perspective.Location = new Point(8, 448);
-            perspective.Name = "perspective";
-            perspective.Size = new Size(32, 32);
-            perspective.TabIndex = 31;
-            perspective.UseVisualStyleBackColor = true;
-            perspective.Click += ProjectionClick;
-            // 
             // axonometric
             // 
             axonometric.BackgroundImage = (Image)resources.GetObject("axonometric.BackgroundImage");
             axonometric.BackgroundImageLayout = ImageLayout.Stretch;
             axonometric.FlatStyle = FlatStyle.Flat;
-            axonometric.Location = new Point(8, 488);
+            axonometric.Location = new Point(8, 448);
             axonometric.Name = "axonometric";
             axonometric.Size = new Size(32, 32);
-            axonometric.TabIndex = 32;
+            axonometric.TabIndex = 31;
             axonometric.UseVisualStyleBackColor = true;
             axonometric.Click += ProjectionClick;
+            // 
+            // perspective
+            // 
+            perspective.BackgroundImage = (Image)resources.GetObject("perspective.BackgroundImage");
+            perspective.BackgroundImageLayout = ImageLayout.Stretch;
+            perspective.FlatStyle = FlatStyle.Flat;
+            perspective.Location = new Point(8, 488);
+            perspective.Name = "perspective";
+            perspective.Size = new Size(32, 32);
+            perspective.TabIndex = 32;
+            perspective.UseVisualStyleBackColor = true;
+            perspective.Click += ProjectionClick;
             // 
             // comboBox
             // 
@@ -443,6 +445,16 @@
             createRotation.UseVisualStyleBackColor = true;
             createRotation.Click += CreateRotationButton;
             // 
+            // transformOk
+            // 
+            transformOk.Location = new Point(92, 99);
+            transformOk.Name = "transformOk";
+            transformOk.Size = new Size(63, 29);
+            transformOk.TabIndex = 41;
+            transformOk.Text = "Ok";
+            transformOk.UseVisualStyleBackColor = true;
+            transformOk.Click += TransformOkClick;
+            // 
             // Form
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
@@ -458,8 +470,8 @@
             Controls.Add(upload);
             Controls.Add(download);
             Controls.Add(comboBox);
-            Controls.Add(axonometric);
             Controls.Add(perspective);
+            Controls.Add(axonometric);
             Controls.Add(panel1);
             Controls.Add(scale);
             Controls.Add(rotation);
@@ -493,8 +505,8 @@
         private Panel panel1;
         private Label transform;
         private TextBox pX;
-        private Button perspective;
         private Button axonometric;
+        private Button perspective;
         private TextBox rZ;
         private TextBox rY;
         private TextBox rX;
@@ -518,5 +530,6 @@
         private TextBox rotationSplit;
         private Label label3;
         private Button createRotation;
+        private Button transformOk;
     }
 }

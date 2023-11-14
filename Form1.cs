@@ -15,6 +15,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Globalization;
+using System.Diagnostics.Metrics;
 
 namespace Rogalik_s_3D
 {
@@ -23,7 +24,7 @@ namespace Rogalik_s_3D
         Bitmap map;
         Graphics graphics;
         Pen pen = new Pen(Color.White, 3);
-        Pen axes = new Pen(Color.Aqua, 3);
+        //Pen axes = new Pen(Color.Aqua, 3);
 
         enum State { Position, Rotation, Scale, Draw }
         enum Plane { X, Y, Z, XYZ }
@@ -31,7 +32,7 @@ namespace Rogalik_s_3D
         Plane plane = Plane.XYZ;
         PointF mousePosition;
         List<PointF> pointsRotation = new();
-        PointXYZ cameraPosition = new(0, 0, 10);
+        PointXYZ cameraPosition = new(0, 0, -5);
         List<Polyhedron> polyhedrons = new List<Polyhedron>();
         bool isMouseDown = false;
         int indexPolyhedron = 0;
@@ -127,11 +128,6 @@ namespace Rogalik_s_3D
             return new(x, y, (float)(Math.Cos(r) / (r + 1)));
         }
 
-        private PointXYZ ChangeRange(PointXYZ point, float x1, float x2, float y1, float y2)
-        {
-            return point;
-        }
-
         private Polyhedron Graph(PointXYZ point, float x1, float x2, float y1, float y2, int split)
         {
             List<Polygon> polygons = new();
@@ -164,12 +160,10 @@ namespace Rogalik_s_3D
             return new(point, points.ToArray(), polygons.ToArray());
         }
 
-        private void DrawLine(PointXYZ point1, PointXYZ point2, PointXYZ point)
+        private void DrawLine(PointXYZ point1, PointXYZ point2)
         {
-            PointF p1 = new(map.Width / 2 + (point.x + point1.x) * 100,
-                map.Height / 2 - (point.y + point1.y) * 100);
-            PointF p2 = new(map.Width / 2 + (point.x + point2.x) * 100,
-                map.Height / 2 - (point.y + point2.y) * 100);
+            PointF p1 = new(map.Width / 2 + point1.x * 100, map.Height / 2 - point1.y * 100);
+            PointF p2 = new(map.Width / 2 + point2.x * 100, map.Height / 2 - point2.y * 100);
 
             graphics.DrawLine(pen, p1, p2);
         }
@@ -253,60 +247,20 @@ namespace Rogalik_s_3D
                 polyhedron.points[i] = Multiplication(polyhedron.points[i], matrix);
         }
 
-        /*void AxonometricProjection()
+        void AxonometricProjection()
         {
-            List<Polyhedron> newPolyhedrons = new List<Polyhedron>();
-            for (int i = 0; i < polyhedrons.Count; i++)
-            {
-                var point = new PointXYZ(polyhedrons[i].point);
-                var newPolygons = new Polygon[polyhedrons[i].polygons.Length];
-                for (int j = 0; j < newPolygons.Length; j++)
+            foreach (var polyhedron in polyhedrons)
+                for (int i = 0; i < polyhedron.polygons.Length; i++)
                 {
-                    var newLines = new Line[polyhedrons[i].polygons[j].lines.Length];
-                    for (int l = 0; l < newLines.Length; l++)
-                        newLines[l] = new Line(
-                            new(polyhedrons[i].polygons[j].lines[l].point1),
-                            new(polyhedrons[i].polygons[j].lines[l].point2));
-                    newPolygons[j] = new Polygon(newLines);
+                    for (int j = 0; j < polyhedron.polygons[i].indexes.Length - 1; j++)
+                        DrawLine(polyhedron.points[polyhedron.polygons[i].indexes[j]] + polyhedron.point,
+                            polyhedron.points[polyhedron.polygons[i].indexes[j + 1]] + polyhedron.point);
+                    DrawLine(polyhedron.points[polyhedron.polygons[i].indexes[polyhedron.polygons[i].indexes.Length - 1]] + polyhedron.point,
+                            polyhedron.points[polyhedron.polygons[i].indexes[0]] + polyhedron.point);
                 }
-                newPolyhedrons.Add(new Polyhedron(newPolygons, point));
-            }
-
-            var sf = (float)Math.Sqrt(1.0 / 3.0);
-            var cf = (float)Math.Sqrt(2.0 / 3.0);
-            var sp = (float)Math.Sqrt(1.0 / 2.0);
-            var cp = (float)Math.Sqrt(1.0 / 2.0);
-
-            float[,] matrix = new float[4, 4];
-            matrix[0, 0] = cp;
-            matrix[0, 1] = sf * sp;
-            matrix[1, 1] = cf;
-            matrix[2, 0] = sp;
-            matrix[2, 1] = -sf * cp;
-            matrix[3, 3] = 1;
-
-            foreach (var polyhedron in newPolyhedrons)
-                foreach (var polygon in polyhedron.polygons)
-                {
-                    for (int i = 0; i < polygon.lines.Length; i++)
-                        polygon.ChangePoint(i, Multiplication(
-                            polygon.lines[i].point1, matrix));
-                    foreach (var line in polygon.lines)
-                        DrawLine(line, polyhedron.point);
-                }
-
-            int cathet = (int)Math.Sqrt(Math.Pow(map.Width / 2, 2) / 3);
-            Point xyz = new(map.Width / 2, map.Height / 2);
-            Point x = new(map.Width, map.Height / 2 + cathet);
-            Point y = new(map.Width / 2, 0);
-            Point z = new(0, map.Height / 2 + cathet);
-
-            graphics.DrawLine(axes, xyz, x);
-            graphics.DrawLine(axes, xyz, y);
-            graphics.DrawLine(axes, xyz, z);
 
             pictureBox.Image = map;
-        }*/
+        }
 
         PointXYZ MultiplicationP(PointXYZ point, float[,] matrix)
         {
@@ -332,25 +286,25 @@ namespace Rogalik_s_3D
                 points[i] = new PointXYZ[polyhedrons[i].points.Length];
                 for (int j = 0; j < points[i].Length; j++)
                 {
-                    matrix[2, 3] = -1 / (polyhedrons[i].point.z + polyhedrons[i].points[j].z);
-                    points[i][j] = MultiplicationP(polyhedrons[i].points[j], matrix);
+                    matrix[2, 3] = -1 / (polyhedrons[i].point.z + polyhedrons[i].points[j].z - cameraPosition.z);
+                    points[i][j] = MultiplicationP(polyhedrons[i].points[j], matrix) + polyhedrons[i].point - cameraPosition;
                 }
             }
 
-            Point xy = new(map.Width / 2, map.Height / 2);
+            /*Point xy = new(map.Width / 2, map.Height / 2);
             Point x = new(map.Width, map.Height / 2);
             Point y = new(map.Width / 2, 0);
             graphics.DrawLine(axes, xy, x);
-            graphics.DrawLine(axes, xy, y);
+            graphics.DrawLine(axes, xy, y);*/
 
             for (int i = 0; i < polyhedrons.Count; i++)
                 for (int j = 0; j < polyhedrons[i].polygons.Length; j++)
                 {
                     for (int l = 0; l < polyhedrons[i].polygons[j].indexes.Length - 1; l++)
                         DrawLine(points[i][polyhedrons[i].polygons[j].indexes[l]],
-                            points[i][polyhedrons[i].polygons[j].indexes[l + 1]], polyhedrons[i].point);
+                            points[i][polyhedrons[i].polygons[j].indexes[l + 1]]);
                     DrawLine(points[i][polyhedrons[i].polygons[j].indexes[polyhedrons[i].polygons[j].indexes.Length - 1]],
-                            points[i][polyhedrons[i].polygons[j].indexes[0]], polyhedrons[i].point);
+                            points[i][polyhedrons[i].polygons[j].indexes[0]]);
                 }
 
             pictureBox.Image = map;
@@ -386,7 +340,6 @@ namespace Rogalik_s_3D
                 matrix[0, 1] = -(float)Math.Sin(angle);
             }
 
-
             PointXYZ[] points = new PointXYZ[parts * pointsRotation.Count];
 
             for (int i = 0; i < pointsRotation.Count; i++)
@@ -419,6 +372,7 @@ namespace Rogalik_s_3D
             for (int j = 0; j < parts; j++)
                 side[j] = j * pointsRotation.Count;
             polygons.Add(new(side));
+            side = new int[parts];
             for (int j = 0; j < parts; j++)
                 side[j] = (j + 1) * pointsRotation.Count - 1;
             polygons.Add(new(side));
@@ -430,10 +384,10 @@ namespace Rogalik_s_3D
         private void ShowPolyhedrons()
         {
             graphics.Clear(pictureBox.BackColor);
-            //if (isPerspective)
-            PerspectiveProjection();
-            //else
-            //    AxonometricProjection();
+            if (isPerspective)
+                PerspectiveProjection();
+            else
+                AxonometricProjection();
             if (pointsRotation.Count == 0)
                 return;
             if (pointsRotation.Count == 1)
@@ -501,11 +455,11 @@ namespace Rogalik_s_3D
         private void PolyhedronClick(object sender, EventArgs e)
         {
             if (sender.Equals(polyhedron1))
-                polyhedrons.Add(Tetrahedron(1, cameraPosition));
+                polyhedrons.Add(Tetrahedron(1, new()));
             else if (sender.Equals(polyhedron2))
-                polyhedrons.Add(Hexahedron(1, cameraPosition));
+                polyhedrons.Add(Hexahedron(1, new()));
             else if (sender.Equals(polyhedron3))
-                polyhedrons.Add(Octahedron(1, cameraPosition));
+                polyhedrons.Add(Octahedron(1, new()));
 
             indexPolyhedron = polyhedrons.Count - 1;
 
@@ -531,10 +485,10 @@ namespace Rogalik_s_3D
 
         private void ProjectionClick(object sender, EventArgs e)
         {
-            if (sender.Equals(perspective))
-                isPerspective = true;
-            else
+            if (sender.Equals(axonometric))
                 isPerspective = false;
+            else
+                isPerspective = true;
             ShowPolyhedrons();
         }
 
@@ -587,7 +541,7 @@ namespace Rogalik_s_3D
                             polygons.Add(new(polygonIndexes.ToArray()));
                         }
                     }
-                    polyhedrons.Add(new(cameraPosition, points.ToArray(), polygons.ToArray()));
+                    polyhedrons.Add(new(new(), points.ToArray(), polygons.ToArray()));
                 }
                 indexPolyhedron = polyhedrons.Count - 1;
                 // Отображение загруженной модели
@@ -636,7 +590,7 @@ namespace Rogalik_s_3D
                 int.TryParse(graphY2.Text, out int y2) && y1 < y2 &&
                 int.TryParse(graphSplit.Text, out int split) && split >= 2 && split <= 100)
             {
-                polyhedrons.Add(Graph(cameraPosition, x1, x2, y1, y2, split));
+                polyhedrons.Add(Graph(new(), x1, x2, y1, y2, split));
 
                 indexPolyhedron = polyhedrons.Count - 1;
                 ShowPolyhedrons();
@@ -675,9 +629,18 @@ namespace Rogalik_s_3D
             if (pointsRotation.Count == 0 || !int.TryParse(rotationSplit.Text, out int split))
                 return;
 
-            polyhedrons.Add(RotatePoints(cameraPosition, split));
+            polyhedrons.Add(RotatePoints(new(), split));
             indexPolyhedron = polyhedrons.Count - 1;
             state = State.Position;
+            ShowPolyhedrons();
+        }
+
+        private void TransformOkClick(object sender, EventArgs e)
+        {
+            if (int.TryParse(pX.Text, out int x) &&
+                int.TryParse(pY.Text, out int y) &&
+                int.TryParse(pZ.Text, out int z))
+                cameraPosition = new(x, y, z);
             ShowPolyhedrons();
         }
     }
@@ -698,6 +661,20 @@ namespace Rogalik_s_3D
             x = point.x;
             y = point.y;
             z = point.z;
+        }
+        public PointXYZ()
+        {
+            x = 0;
+            y = 0;
+            z = 0;
+        }
+        public static PointXYZ operator +(PointXYZ p1, PointXYZ p2)
+        {
+            return new(p1.x + p2.x, p1.y + p2.y, p1.z + p2.z);
+        }
+        public static PointXYZ operator -(PointXYZ p1, PointXYZ p2)
+        {
+            return new(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
         }
     }
 
