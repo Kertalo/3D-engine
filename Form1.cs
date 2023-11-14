@@ -359,13 +359,33 @@ namespace Rogalik_s_3D
         private Polyhedron RotatePoints(PointXYZ point, int parts)
         {
             float[,] matrix = new float[4, 4];
-            matrix[1, 1] = 1;
+            Plane xyz = plane == Plane.XYZ ? Plane.Y : plane;
+            int xyzI = xyz == Plane.X ? 0 : xyz == Plane.Y ? 1 : 2;
+            matrix[xyzI, xyzI] = 1;
             matrix[3, 3] = 1;
             double angle = 360.0 / parts * Math.PI / 180.0;
-            matrix[0, 0] = (float)Math.Cos(-angle);
-            matrix[2, 2] = (float)Math.Cos(-angle);
-            matrix[2, 0] = (float)Math.Sin(-angle);
-            matrix[0, 2] = -(float)Math.Sin(-angle);
+            if (xyz == Plane.X)
+            {
+                matrix[1, 1] = (float)Math.Cos(angle);
+                matrix[2, 2] = (float)Math.Cos(angle);
+                matrix[2, 1] = (float)Math.Sin(angle);
+                matrix[1, 2] = -(float)Math.Sin(angle);
+            }
+            if (xyz == Plane.Y)
+            {
+                matrix[0, 0] = (float)Math.Cos(-angle);
+                matrix[2, 2] = (float)Math.Cos(-angle);
+                matrix[2, 0] = (float)Math.Sin(-angle);
+                matrix[0, 2] = -(float)Math.Sin(-angle);
+            }
+            if (xyz == Plane.Z)
+            {
+                matrix[0, 0] = (float)Math.Cos(angle);
+                matrix[1, 1] = (float)Math.Cos(angle);
+                matrix[1, 0] = (float)Math.Sin(angle);
+                matrix[0, 1] = -(float)Math.Sin(angle);
+            }
+
 
             PointXYZ[] points = new PointXYZ[parts * pointsRotation.Count];
 
@@ -375,7 +395,7 @@ namespace Rogalik_s_3D
 
             for (int i = 1; i < parts; i++)
                 for (int j = 0; j < pointsRotation.Count; j++)
-                    points[i * pointsRotation.Count + j] = 
+                    points[i * pointsRotation.Count + j] =
                         Multiplication(points[(i - 1) * pointsRotation.Count + j], matrix);
 
             List<Polygon> polygons = new();
@@ -411,7 +431,7 @@ namespace Rogalik_s_3D
         {
             graphics.Clear(pictureBox.BackColor);
             //if (isPerspective)
-                PerspectiveProjection();
+            PerspectiveProjection();
             //else
             //    AxonometricProjection();
             if (pointsRotation.Count == 0)
@@ -494,6 +514,11 @@ namespace Rogalik_s_3D
 
         private void StateClick(object sender, EventArgs e)
         {
+            if (state == State.Draw)
+            {
+                pointsRotation.Clear();
+            }
+
             if (sender.Equals(position))
                 state = State.Position;
             else if (sender.Equals(rotation))
@@ -547,7 +572,7 @@ namespace Rogalik_s_3D
                         string[] split = line.Split(' ');
                         if (split[0] == "v")
                             points.Add(new(float.Parse(split[1], CultureInfo.InvariantCulture),
-                                float.Parse(split[2], CultureInfo.InvariantCulture), 
+                                float.Parse(split[2], CultureInfo.InvariantCulture),
                                 float.Parse(split[3], CultureInfo.InvariantCulture)));
                         else if (split[0] == "f")
                         {
@@ -645,11 +670,12 @@ namespace Rogalik_s_3D
             }
         }
 
-        private void Create3DClick(object sender, EventArgs e)
+        private void CreateRotationButton(object sender, EventArgs e)
         {
-            if (pointsRotation.Count == 0)
+            if (pointsRotation.Count == 0 || !int.TryParse(rotationSplit.Text, out int split))
                 return;
-            polyhedrons.Add(RotatePoints(cameraPosition, 10));
+
+            polyhedrons.Add(RotatePoints(cameraPosition, split));
             indexPolyhedron = polyhedrons.Count - 1;
             state = State.Position;
             ShowPolyhedrons();

@@ -30,7 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form));
             pictureBox = new PictureBox();
-            graph = new Button();
+            createGraph = new Button();
             polyhedron1 = new Button();
             polyhedron2 = new Button();
             polyhedron3 = new Button();
@@ -57,17 +57,18 @@
             graphX2 = new TextBox();
             graphX1 = new TextBox();
             label1 = new Label();
-            panel3 = new Panel();
             left = new Button();
             right = new Button();
-            label2 = new Label();
             delete = new Button();
-            create3d = new Button();
             draw = new Button();
+            panel4 = new Panel();
+            rotationSplit = new TextBox();
+            label3 = new Label();
+            createRotation = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
-            panel3.SuspendLayout();
+            panel4.SuspendLayout();
             SuspendLayout();
             // 
             // pictureBox
@@ -78,22 +79,22 @@
             pictureBox.Cursor = Cursors.Cross;
             pictureBox.Location = new Point(48, 8);
             pictureBox.Name = "pictureBox";
-            pictureBox.Size = new Size(705, 705);
+            pictureBox.Size = new Size(704, 665);
             pictureBox.TabIndex = 0;
             pictureBox.TabStop = false;
             pictureBox.MouseDown += PictureBoxMouseDown;
             pictureBox.MouseMove += PictureBoxMouseMove;
             pictureBox.MouseUp += PictureBoxMouseUp;
             // 
-            // graph
+            // createGraph
             // 
-            graph.Location = new Point(20, 96);
-            graph.Name = "graph";
-            graph.Size = new Size(63, 29);
-            graph.TabIndex = 21;
-            graph.Text = "Ok";
-            graph.UseVisualStyleBackColor = true;
-            graph.Click += GraphClick;
+            createGraph.Location = new Point(20, 96);
+            createGraph.Name = "createGraph";
+            createGraph.Size = new Size(63, 29);
+            createGraph.TabIndex = 21;
+            createGraph.Text = "Ok";
+            createGraph.UseVisualStyleBackColor = true;
+            createGraph.Click += GraphClick;
             // 
             // polyhedron1
             // 
@@ -300,7 +301,7 @@
             panel2.Controls.Add(graphX2);
             panel2.Controls.Add(graphX1);
             panel2.Controls.Add(label1);
-            panel2.Controls.Add(graph);
+            panel2.Controls.Add(createGraph);
             panel2.Location = new Point(761, 144);
             panel2.Name = "panel2";
             panel2.Size = new Size(239, 128);
@@ -354,69 +355,41 @@
             label1.Text = "Graph";
             label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // panel3
-            // 
-            panel3.Controls.Add(left);
-            panel3.Controls.Add(right);
-            panel3.Controls.Add(label2);
-            panel3.Controls.Add(delete);
-            panel3.Location = new Point(761, 280);
-            panel3.Name = "panel3";
-            panel3.Size = new Size(239, 128);
-            panel3.TabIndex = 39;
-            // 
             // left
             // 
-            left.Location = new Point(0, 51);
+            left.BackgroundImage = (Image)resources.GetObject("left.BackgroundImage");
+            left.BackgroundImageLayout = ImageLayout.Stretch;
+            left.FlatStyle = FlatStyle.Flat;
+            left.Location = new Point(344, 681);
             left.Name = "left";
-            left.Size = new Size(63, 29);
+            left.Size = new Size(32, 32);
             left.TabIndex = 34;
-            left.Text = "<-";
             left.UseVisualStyleBackColor = true;
             left.Click += LeftRightClick;
             // 
             // right
             // 
-            right.Location = new Point(88, 50);
+            right.BackgroundImage = (Image)resources.GetObject("right.BackgroundImage");
+            right.BackgroundImageLayout = ImageLayout.Stretch;
+            right.FlatStyle = FlatStyle.Flat;
+            right.Location = new Point(424, 681);
             right.Name = "right";
-            right.Size = new Size(63, 29);
+            right.Size = new Size(32, 32);
             right.TabIndex = 33;
-            right.Text = "->";
             right.UseVisualStyleBackColor = true;
             right.Click += LeftRightClick;
             // 
-            // label2
-            // 
-            label2.Anchor = AnchorStyles.Top;
-            label2.AutoSize = true;
-            label2.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
-            label2.ForeColor = Color.White;
-            label2.Location = new Point(92, 0);
-            label2.Name = "label2";
-            label2.Size = new Size(63, 23);
-            label2.TabIndex = 32;
-            label2.Text = "Object";
-            label2.TextAlign = ContentAlignment.MiddleCenter;
-            // 
             // delete
             // 
-            delete.Location = new Point(170, 50);
+            delete.BackgroundImage = (Image)resources.GetObject("delete.BackgroundImage");
+            delete.BackgroundImageLayout = ImageLayout.Stretch;
+            delete.FlatStyle = FlatStyle.Flat;
+            delete.Location = new Point(384, 681);
             delete.Name = "delete";
-            delete.Size = new Size(63, 29);
+            delete.Size = new Size(32, 32);
             delete.TabIndex = 21;
-            delete.Text = "Delete";
             delete.UseVisualStyleBackColor = true;
             delete.Click += DeleteClick;
-            // 
-            // create3d
-            // 
-            create3d.Location = new Point(837, 448);
-            create3d.Name = "create3d";
-            create3d.Size = new Size(87, 29);
-            create3d.TabIndex = 35;
-            create3d.Text = "Create 3D";
-            create3d.UseVisualStyleBackColor = true;
-            create3d.Click += Create3DClick;
             // 
             // draw
             // 
@@ -430,15 +403,57 @@
             draw.UseVisualStyleBackColor = true;
             draw.Click += StateClick;
             // 
+            // panel4
+            // 
+            panel4.Controls.Add(rotationSplit);
+            panel4.Controls.Add(label3);
+            panel4.Controls.Add(createRotation);
+            panel4.Location = new Point(761, 414);
+            panel4.Name = "panel4";
+            panel4.Size = new Size(239, 128);
+            panel4.TabIndex = 39;
+            // 
+            // rotationSplit
+            // 
+            rotationSplit.Location = new Point(54, 39);
+            rotationSplit.Name = "rotationSplit";
+            rotationSplit.Size = new Size(55, 27);
+            rotationSplit.TabIndex = 38;
+            // 
+            // label3
+            // 
+            label3.Anchor = AnchorStyles.Top;
+            label3.AutoSize = true;
+            label3.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
+            label3.ForeColor = Color.White;
+            label3.Location = new Point(73, 1);
+            label3.Name = "label3";
+            label3.Size = new Size(107, 23);
+            label3.TabIndex = 32;
+            label3.Text = "Rotation 3D";
+            label3.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // createRotation
+            // 
+            createRotation.Location = new Point(133, 36);
+            createRotation.Name = "createRotation";
+            createRotation.Size = new Size(63, 29);
+            createRotation.TabIndex = 21;
+            createRotation.Text = "Ok";
+            createRotation.UseVisualStyleBackColor = true;
+            createRotation.Click += CreateRotationButton;
+            // 
             // Form
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.DimGray;
             ClientSize = new Size(1006, 721);
+            Controls.Add(left);
+            Controls.Add(right);
+            Controls.Add(panel4);
             Controls.Add(draw);
-            Controls.Add(create3d);
-            Controls.Add(panel3);
+            Controls.Add(delete);
             Controls.Add(panel2);
             Controls.Add(upload);
             Controls.Add(download);
@@ -460,15 +475,15 @@
             panel1.PerformLayout();
             panel2.ResumeLayout(false);
             panel2.PerformLayout();
-            panel3.ResumeLayout(false);
-            panel3.PerformLayout();
+            panel4.ResumeLayout(false);
+            panel4.PerformLayout();
             ResumeLayout(false);
         }
 
         #endregion
 
         private PictureBox pictureBox;
-        private Button graph;
+        private Button createGraph;
         private Button polyhedron1;
         private Button polyhedron2;
         private Button polyhedron3;
@@ -494,13 +509,14 @@
         private TextBox graphX2;
         private TextBox graphX1;
         private Label label1;
-        private Panel panel3;
         private Button left;
         private Button right;
-        private Label label2;
         private Button delete;
-        private Button create3d;
         private Button draw;
         private TextBox graphSplit;
+        private Panel panel4;
+        private TextBox rotationSplit;
+        private Label label3;
+        private Button createRotation;
     }
 }
