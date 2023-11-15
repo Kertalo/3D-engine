@@ -249,6 +249,7 @@ namespace Rogalik_s_3D
 
         void AxonometricProjection()
         {
+
             foreach (var polyhedron in polyhedrons)
                 for (int i = 0; i < polyhedron.polygons.Length; i++)
                 {
