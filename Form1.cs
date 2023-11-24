@@ -19,12 +19,14 @@ namespace Rogalik_s_3D
         PointF mousePosition;
         List<PointF> pointsRotation = new();
         Vector3 cameraPosition = new();
+        Vector3 cameraUp = new();
+        Vector3 cameraRight = new();
         Vector3 cameraRotation = new();
 
         List<Polyhedron> polyhedrons = new List<Polyhedron>();
         bool isMouseDown = false;
         int indexPolyhedron = 0;
-        bool isPerspective = true;
+        bool isPerspective = false;
 
         private float[,] zBuffer;
         private Color[,] frameBuffer;
@@ -39,20 +41,29 @@ namespace Rogalik_s_3D
             frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
 
             comboBox.SelectedItem = "XYZ";
-            SetCamera(new(0, 0, -10), new(0, 0, 0));
+            SetCamera(new(0, 0, -10), new(0, 1, 0), new(0.5f, 0, -0.5f));
             ShowPolyhedrons();
         }
 
-        private void SetCamera(Vector3 point, Vector3 vector)
+        void UpdateCameraText()
+        {
+            uY.Text = cameraUp.Y.ToString();
+            uX.Text = cameraUp.X.ToString();
+            uZ.Text = cameraUp.Z.ToString();
+            rY.Text = cameraRight.Y.ToString();
+            rX.Text = cameraRight.X.ToString();
+            rZ.Text = cameraRight.Z.ToString();
+        }
+
+        private void SetCamera(Vector3 point, Vector3 vector1, Vector3 vector2)
         {
             cameraPosition = point;
-            cameraRotation = vector;
+            cameraUp = Normal(vector1);
+            cameraRight = Normal(vector2);
             pX.Text = cameraPosition.X.ToString();
             pY.Text = cameraPosition.Y.ToString();
             pZ.Text = cameraPosition.Z.ToString();
-            rX.Text = cameraRotation.X.ToString();
-            rY.Text = cameraRotation.Y.ToString();
-            rZ.Text = cameraRotation.Z.ToString();
+            UpdateCameraText();
         }
 
         private Polyhedron Tetrahedron(float side, Vector3 point)
@@ -93,12 +104,12 @@ namespace Rogalik_s_3D
             points[7] = new Vector3(-side, side, side);
 
             Polygon[] polygons = new Polygon[6];
-            polygons[0] = new(new int[] { 0, 1, 2, 3 });
-            polygons[1] = new(new int[] { 0, 1, 5, 4 });
-            polygons[2] = new(new int[] { 0, 3, 7, 4 });
-            polygons[3] = new(new int[] { 1, 2, 6, 5 });
-            polygons[4] = new(new int[] { 2, 3, 7, 6 });
-            polygons[5] = new(new int[] { 4, 5, 6, 7 });
+            polygons[0] = new(new int[] { 0, 1, 2, 3 }, new(0, -1, 0));
+            polygons[1] = new(new int[] { 0, 1, 5, 4 }, new(0, 0, -1));
+            polygons[2] = new(new int[] { 0, 3, 7, 4 }, new(-1, 0, 0));
+            polygons[3] = new(new int[] { 1, 2, 6, 5 }, new(1, 0, 0));
+            polygons[4] = new(new int[] { 2, 3, 7, 6 }, new(0, 0, 1));
+            polygons[5] = new(new int[] { 4, 5, 6, 7 }, new(0, 1, 0));
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
@@ -174,6 +185,37 @@ namespace Rogalik_s_3D
                 new PointF(map.Width / 2 + p2.X * 100, map.Height / 2 - p2.Y * 100));
         }
 
+        private Vector3 Normal(Vector3 vector)
+        {
+            return vector / vector.Length();
+        }
+
+        float[] Multiplication(Vector3 point, float[,] matrix)
+        {
+            float[] newPoint = new float[4];
+            float[] pointArray = new float[]
+                { point.X, point.Y, point.Z, 1 };
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                    newPoint[i] += pointArray[j] * matrix[j, i];
+            return newPoint;
+        }
+
+        float[,] MultiplicationMatrix(float[,] matrix1, float[,] matrix2)
+        {
+            float[,] resMatrix = new float[4, 4];
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                    for (int k = 0; k < 4; k++)
+                        resMatrix[i, j] += matrix1[i, k] * matrix2[k, j];
+            return resMatrix;
+        }
+
+        static Vector3 CrossProduct(Vector3 v1, Vector3 v2)
+        {
+            return new(v1.Y * v2.Z - v1.Z * v2.Y, v1.Z * v2.X - v1.X * v2.Z, v1.X * v2.Y - v1.Y * v2.X);
+        }
+
         void Shift(ref Polyhedron polyhedron, Vector3 vector)
         {
             float[,] matrix = new float[,]
@@ -185,33 +227,46 @@ namespace Rogalik_s_3D
             polyhedron.point = new(Multiplication(polyhedron.point, matrix));
         }
 
-        void Rotate(ref Polyhedron polyhedron, float rotate, Plane xyz)
+        void Rotate(ref Polyhedron polyhedron, Vector3 vector)
         {
             float[,] matrix = new float[4, 4];
-            int xyzI = xyz == Plane.X ? 0 : xyz == Plane.Y ? 1 : 2;
-            matrix[xyzI, xyzI] = 1;
+            matrix[0, 0] = 1;
+            matrix[1, 1] = 1;
+            matrix[2, 2] = 1;
             matrix[3, 3] = 1;
-            double angle = rotate * 180 / Math.PI;
-            if (xyz == Plane.X)
+
+            if (vector.X != 0)
             {
-                matrix[1, 1] = (float)Math.Cos(angle);
-                matrix[2, 2] = (float)Math.Cos(angle);
-                matrix[2, 1] = (float)Math.Sin(angle);
-                matrix[1, 2] = -(float)Math.Sin(angle);
+                float[,] addMatrix = new float[4, 4];
+                addMatrix[0, 0] = 1;
+                addMatrix[1, 1] = (float)Math.Cos(vector.X * Math.PI);
+                addMatrix[2, 2] = (float)Math.Cos(vector.X * Math.PI);
+                addMatrix[2, 1] = (float)Math.Sin(vector.X * Math.PI);
+                addMatrix[1, 2] = -(float)Math.Sin(vector.X * Math.PI);
+                addMatrix[3, 3] = 1;
+                matrix = MultiplicationMatrix(matrix, addMatrix);
             }
-            if (xyz == Plane.Y)
+            else if (vector.Y != 0)
             {
-                matrix[0, 0] = (float)Math.Cos(-angle);
-                matrix[2, 2] = (float)Math.Cos(-angle);
-                matrix[2, 0] = (float)Math.Sin(-angle);
-                matrix[0, 2] = -(float)Math.Sin(-angle);
+                float[,] addMatrix = new float[4, 4];
+                addMatrix[1, 1] = 1;
+                addMatrix[0, 0] = (float)Math.Cos(-vector.Y * Math.PI);
+                addMatrix[2, 2] = (float)Math.Cos(-vector.Y * Math.PI);
+                addMatrix[2, 0] = (float)Math.Sin(-vector.Y * Math.PI);
+                addMatrix[0, 2] = -(float)Math.Sin(-vector.Y * Math.PI);
+                addMatrix[3, 3] = 1;
+                matrix = MultiplicationMatrix(matrix, addMatrix);
             }
-            if (xyz == Plane.Z)
+            else if (vector.Z != 0)
             {
-                matrix[0, 0] = (float)Math.Cos(angle);
-                matrix[1, 1] = (float)Math.Cos(angle);
-                matrix[1, 0] = (float)Math.Sin(angle);
-                matrix[0, 1] = -(float)Math.Sin(angle);
+                float[,] addMatrix = new float[4, 4];
+                addMatrix[2, 2] = 1;
+                addMatrix[0, 0] = (float)Math.Cos(vector.Z * Math.PI);
+                addMatrix[1, 1] = (float)Math.Cos(vector.Z * Math.PI);
+                addMatrix[1, 0] = (float)Math.Sin(vector.Z * Math.PI);
+                addMatrix[0, 1] = -(float)Math.Sin(vector.Z * Math.PI);
+                addMatrix[3, 3] = 1;
+                matrix = MultiplicationMatrix(matrix, addMatrix);
             }
 
             for (int i = 0; i < polyhedron.points.Length; i++)
@@ -240,6 +295,7 @@ namespace Rogalik_s_3D
 
         void AxonometricProjection()
         {
+            cameraRotation = Normal(new(-cameraRight.Z, 0, cameraRight.X));
             Vector3[][] points = new Vector3[polyhedrons.Count][];
             for (int i = 0; i < polyhedrons.Count; i++)
             {
@@ -253,6 +309,22 @@ namespace Rogalik_s_3D
             for (int i = 0; i < polyhedrons.Count; i++)
                 newPolyhedrons[i] = new(polyhedrons[i].point, points[i], polyhedrons[i].polygons);
 
+            float[,] matrix = { { cameraRight.X, cameraRight.Y, cameraRight.Z, 0 },
+                                { cameraUp.X, cameraUp.Y, cameraUp.Z, 0 },
+                                { cameraRotation.X, cameraRotation.Y, cameraRotation.Z, 0 },
+                                { 0, 0, 0, 1 } };
+
+            float[,] matrix2 = { { 1, 0, 0, -cameraPosition.X },
+                                 { 0, 1, 0, -cameraPosition.Y },
+                                 { 0, 0, 1, -cameraPosition.Z },
+                                 { 0, 0, 0, 1 } };
+
+            matrix = MultiplicationMatrix(matrix, matrix2);
+
+            for (int i = 0; i < newPolyhedrons.Count(); i++)
+                for (int j = 0; j < newPolyhedrons[i].points.Length; j++)
+                    newPolyhedrons[i].points[j] = new(Multiplication(newPolyhedrons[i].points[j], matrix));
+
             foreach (var polyhedron in newPolyhedrons)
                 for (int i = 0; i < polyhedron.polygons.Length; i++)
                 {
@@ -264,17 +336,6 @@ namespace Rogalik_s_3D
                 }
 
             pictureBox.Image = map;
-        }
-
-        float[] Multiplication(Vector3 point, float[,] matrix)
-        {
-            float[] newPoint = new float[4];
-            float[] pointArray = new float[]
-                { point.X, point.Y, point.Z, 1 };
-            for (int i = 0; i < 4; i++)
-                for (int j = 0; j < 4; j++)
-                    newPoint[i] += pointArray[j] * matrix[j, i];
-            return newPoint;
         }
 
         void PerspectiveProjection()
@@ -416,8 +477,16 @@ namespace Rogalik_s_3D
             }
         }
 
+        //float x = 0;
+
         private void PictureBoxMouseMove(object sender, MouseEventArgs e)
         {
+            /*x += 0.5f;
+            if (x >= 360)
+                x = 0;
+            double temp_x = x / 180 * Math.PI;
+            SetCamera(cameraPosition, new(0, 1, 0), new((float)Math.Cos(temp_x), 0, (float)Math.Sin(temp_x)));
+            ShowPolyhedrons();*/
             if (!isMouseDown || polyhedrons.Count() < 1 || state == State.Draw)
                 return;
 
@@ -429,12 +498,13 @@ namespace Rogalik_s_3D
             else if (state == State.Rotation)
             {
                 if (plane == Plane.XYZ)
-                {
-                    Rotate(ref polyhedron, -dy / 3000, Plane.X);
-                    Rotate(ref polyhedron, dx / 3000, Plane.Y);
-                }
-                else
-                    Rotate(ref polyhedron, (dx + dy) / 3000, plane);
+                    Rotate(ref polyhedron, new(-dy / 1800, -dx / 1800, 0));
+                else if (plane == Plane.X)
+                    Rotate(ref polyhedron, new((dx + dy) / 1800, 0, 0));
+                else if (plane == Plane.Y)
+                    Rotate(ref polyhedron, new(0, (dx + dy) / 1800, 0));
+                else if (plane == Plane.Z)
+                    Rotate(ref polyhedron, new(0, 0, (dx + dy) / 1800));
             }
             else if (state == State.Scale)
                 Scale(ref polyhedron, (dx + dy) < 0 ? 1 / (1 +
@@ -636,15 +706,21 @@ namespace Rogalik_s_3D
             if (float.TryParse(pX.Text, out float px) &&
                 float.TryParse(pY.Text, out float py) &&
                 float.TryParse(pZ.Text, out float pz) &&
+                float.TryParse(uX.Text, out float ux) &&
+                float.TryParse(uY.Text, out float uy) &&
+                float.TryParse(uZ.Text, out float uz) &&
                 float.TryParse(rX.Text, out float rx) &&
                 float.TryParse(rY.Text, out float ry) &&
                 float.TryParse(rZ.Text, out float rz))
             {
                 cameraPosition = new(px, py, pz);
-                cameraRotation = new(rx, ry, rz);
-            }
+                cameraUp = Normal(new(ux, uy, uz));
+                cameraRight = Normal(new(rx, ry, rz));
 
-            ShowPolyhedrons();
+                UpdateCameraText();
+
+                ShowPolyhedrons();
+            }
         }
 
         private void zBufferButton_Click(object sender, EventArgs e)

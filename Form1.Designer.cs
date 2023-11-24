@@ -39,9 +39,9 @@
             scale = new Button();
             panel1 = new Panel();
             transformOk = new Button();
-            rZ = new TextBox();
-            rY = new TextBox();
-            rX = new TextBox();
+            uZ = new TextBox();
+            uY = new TextBox();
+            uX = new TextBox();
             pZ = new TextBox();
             pY = new TextBox();
             transform = new Label();
@@ -67,6 +67,9 @@
             label3 = new Label();
             createRotation = new Button();
             zBufferButton = new Button();
+            rX = new TextBox();
+            rY = new TextBox();
+            rZ = new TextBox();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -167,22 +170,25 @@
             // 
             // panel1
             // 
-            panel1.Controls.Add(transformOk);
             panel1.Controls.Add(rZ);
             panel1.Controls.Add(rY);
             panel1.Controls.Add(rX);
+            panel1.Controls.Add(transformOk);
+            panel1.Controls.Add(uZ);
+            panel1.Controls.Add(uY);
+            panel1.Controls.Add(uX);
             panel1.Controls.Add(pZ);
             panel1.Controls.Add(pY);
             panel1.Controls.Add(transform);
             panel1.Controls.Add(pX);
             panel1.Location = new Point(761, 8);
             panel1.Name = "panel1";
-            panel1.Size = new Size(239, 128);
+            panel1.Size = new Size(239, 171);
             panel1.TabIndex = 30;
             // 
             // transformOk
             // 
-            transformOk.Location = new Point(92, 99);
+            transformOk.Location = new Point(92, 139);
             transformOk.Name = "transformOk";
             transformOk.Size = new Size(63, 29);
             transformOk.TabIndex = 41;
@@ -190,26 +196,26 @@
             transformOk.UseVisualStyleBackColor = true;
             transformOk.Click += TransformOkClick;
             // 
-            // rZ
+            // uZ
             // 
-            rZ.Location = new Point(184, 68);
-            rZ.Name = "rZ";
-            rZ.Size = new Size(55, 27);
-            rZ.TabIndex = 37;
+            uZ.Location = new Point(184, 68);
+            uZ.Name = "uZ";
+            uZ.Size = new Size(55, 27);
+            uZ.TabIndex = 37;
             // 
-            // rY
+            // uY
             // 
-            rY.Location = new Point(108, 68);
-            rY.Name = "rY";
-            rY.Size = new Size(55, 27);
-            rY.TabIndex = 36;
+            uY.Location = new Point(108, 68);
+            uY.Name = "uY";
+            uY.Size = new Size(55, 27);
+            uY.TabIndex = 36;
             // 
-            // rX
+            // uX
             // 
-            rX.Location = new Point(28, 68);
-            rX.Name = "rX";
-            rX.Size = new Size(55, 27);
-            rX.TabIndex = 35;
+            uX.Location = new Point(28, 68);
+            uX.Name = "uX";
+            uX.Size = new Size(55, 27);
+            uX.TabIndex = 35;
             // 
             // pZ
             // 
@@ -315,7 +321,7 @@
             panel2.Controls.Add(graphX1);
             panel2.Controls.Add(label1);
             panel2.Controls.Add(createGraph);
-            panel2.Location = new Point(761, 144);
+            panel2.Location = new Point(761, 182);
             panel2.Name = "panel2";
             panel2.Size = new Size(239, 128);
             panel2.TabIndex = 38;
@@ -467,6 +473,26 @@
             zBufferButton.TabIndex = 41;
             zBufferButton.UseVisualStyleBackColor = true;
             zBufferButton.Click += zBufferButton_Click;
+            // rX
+            // 
+            rX.Location = new Point(28, 101);
+            rX.Name = "rX";
+            rX.Size = new Size(55, 27);
+            rX.TabIndex = 42;
+            // 
+            // rY
+            // 
+            rY.Location = new Point(108, 101);
+            rY.Name = "rY";
+            rY.Size = new Size(55, 27);
+            rY.TabIndex = 43;
+            // 
+            // rZ
+            // 
+            rZ.Location = new Point(184, 101);
+            rZ.Name = "rZ";
+            rZ.Size = new Size(55, 27);
+            rZ.TabIndex = 44;
             // 
             // Form
             // 
@@ -521,9 +547,9 @@
         private TextBox pX;
         private Button axonometric;
         private Button perspective;
-        private TextBox rZ;
-        private TextBox rY;
-        private TextBox rX;
+        private TextBox uZ;
+        private TextBox uY;
+        private TextBox uX;
         private TextBox pZ;
         private TextBox pY;
         private ComboBox comboBox;
@@ -546,5 +572,8 @@
         private Button createRotation;
         private Button transformOk;
         private Button zBufferButton;
+        private TextBox rZ;
+        private TextBox rY;
+        private TextBox rX;
     }
 }
