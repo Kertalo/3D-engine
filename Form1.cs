@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Globalization;
 using static System.Windows.Forms.AxHost;
 using System.Drawing.Drawing2D;
+using System.Drawing;
 
 namespace Rogalik_s_3D
 {
@@ -25,11 +26,18 @@ namespace Rogalik_s_3D
         int indexPolyhedron = 0;
         bool isPerspective = true;
 
+        private float[,] zBuffer;
+        private Color[,] frameBuffer;
+
         public Form()
         {
             InitializeComponent();
             map = new Bitmap(pictureBox.Width, pictureBox.Height);
             graphics = Graphics.FromImage(map);
+
+            zBuffer = new float[pictureBox.Width, pictureBox.Height];
+            frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
+
             comboBox.SelectedItem = "XYZ";
             SetCamera(new(0, 0, -10), new(0, 0, 0));
             ShowPolyhedrons();
@@ -168,7 +176,7 @@ namespace Rogalik_s_3D
 
         void Shift(ref Polyhedron polyhedron, Vector3 vector)
         {
-            float[,] matrix = new float[, ]
+            float[,] matrix = new float[,]
                 { {  1,  0, 0, 0 },
                   {  0,  1, 0, 0 },
                   {  0,  0, 1, 0 },
@@ -413,7 +421,7 @@ namespace Rogalik_s_3D
             if (!isMouseDown || polyhedrons.Count() < 1 || state == State.Draw)
                 return;
 
-            PointsDistance(mousePosition, e.Location, out float  dx, out float dy);
+            PointsDistance(mousePosition, e.Location, out float dx, out float dy);
             Polyhedron polyhedron = polyhedrons[indexPolyhedron];
 
             if (state == State.Position)
@@ -635,10 +643,174 @@ namespace Rogalik_s_3D
                 cameraPosition = new(px, py, pz);
                 cameraRotation = new(rx, ry, rz);
             }
-                
+
             ShowPolyhedrons();
         }
+
+        private void zBufferButton_Click(object sender, EventArgs e)
+        {
+            zBuffer = new float[pictureBox.Width, pictureBox.Height];
+            frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
+
+            ClearBuffers();
+            graphics.Clear(pictureBox.BackColor);
+
+            foreach (Polyhedron polyhedron in polyhedrons)
+            {
+                foreach (Polygon poly in polyhedron.polygons)
+                {
+                    Vector3[] vertex = new Vector3[3];
+                    for (int i = 0; i < 3; i++)
+                        vertex[i] = polyhedron.points[poly.indexes[i]];
+
+                    var p1 = vertex[0];
+                    p1.X = (int)(map.Width / 2 + p1.X * 100);
+                    p1.Y = (int)(map.Height / 2 - p1.Y * 100);
+                    p1.Z = (int)(p1.Z * 100);
+
+                    var p2 = vertex[1];
+                    p2.X = (int)(map.Width / 2 + p2.X * 100);
+                    p2.Y = (int)(map.Height / 2 - p2.Y * 100);
+                    p2.Z = (int)(p2.Z * 100);
+
+                    var p3 = vertex[2];
+                    p3.X = (int)(map.Width / 2 + p3.X * 100);
+                    p3.Y = (int)(map.Height / 2 - p3.Y * 100);
+                    p3.Z = (int)(p3.Z * 100);
+
+                    map.SetPixel((int)p1.X, (int)p1.Y, Color.White);
+                    map.SetPixel((int)p2.X, (int)p2.Y, Color.White);
+                    map.SetPixel((int)p3.X, (int)p3.Y, Color.White);
+                    Random rnd = new Random();
+                    var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+                    ConvertToRaster(ref p1, ref p2, ref p3, color);
+                }
+            }
+
+             for (int i = 0; i < pictureBox.Width; i++)
+                for (int j = 0; j < pictureBox.Height; j++)
+                    map.SetPixel(i, j, frameBuffer[i, j]);
+
+             pictureBox.Image = map;
+        }
+
+        private void ClearBuffers()
+        {
+            for (int x = 0; x < pictureBox.Width; x++)
+            {
+                for (int y = 0; y < pictureBox.Height; y++)
+                {
+                    zBuffer[x, y] = float.MinValue;
+                    frameBuffer[x, y] = pictureBox.BackColor;
+                }
+            }
+        }
+
+        private List<int> Interpolate(int x1, int y1, int x2, int y2)
+        {
+            List<int> res = new List<int>();
+            if (x1 == x2)
+            {
+                res.Add(y2);
+            }
+            double step = (y2 - y1) * 1.0f / (x2 - x1);
+            double y = y1;
+            for (int i = x1; i <= x2; i++)
+            {
+                res.Add((int)y);
+                y += step;
+            }
+            return res;
+        }
+
+        private void ConvertToRaster(ref Vector3 p0, ref Vector3 p1, ref Vector3 p2, Color color)
+        {
+            if (p1.Y < p0.Y)
+            {
+                var temp = p0;
+                p0 = p1;
+                p1 = temp;
+            }
+
+            if (p2.Y < p0.Y)
+            {
+                var temp = p0;
+                p0 = p2;
+                p2 = temp;
+            }
+
+            if (p2.Y < p1.Y)
+            {
+                var temp = p2;
+                p2 = p1;
+                p1 = temp;
+            }
+
+            var x01 = Interpolate((int)p0.Y, (int)p0.X, (int)p1.Y, (int)p1.X);
+            var x12 = Interpolate((int)p1.Y, (int)p1.X, (int)p2.Y, (int)p2.X);
+            var x02 = Interpolate((int)p0.Y, (int)p0.X, (int)p2.Y, (int)p2.X);
+
+            var z01 = Interpolate((int)p0.Y, (int)p0.Z, (int)p1.Y, (int)p1.Z);
+            var z12 = Interpolate((int)p1.Y, (int)p1.Z, (int)p2.Y, (int)p2.Z);
+            var z02 = Interpolate((int)p0.Y, (int)p0.Z, (int)p2.Y, (int)p2.Z);
+
+            x01.Remove(x01.Last());
+            List<int> x012 = new List<int>();
+            x012.AddRange(x01);
+            x012.AddRange(x12);
+
+            z01.Remove(z01.Last());
+            List<int> z012 = new List<int>();
+            z012.AddRange(z01);
+            z012.AddRange(z12);
+
+            var m = x012.Count / 2;
+            List<int> x_left;
+            List<int> x_right;
+            List<int> z_left;
+            List<int> z_right;
+            if (x02[m] < x012[m]) 
+            {
+                x_left = x02;
+                x_right = x012;
+
+                z_left = z02;
+                z_right = z012;
+            }
+            else
+            {
+                x_left = x012;
+                x_right = x02;
+
+                z_left = z012;
+                z_right = z02;
+            }
+
+            for (int y = (int)p0.Y; y < (int)p2.Y - 1; y++) 
+            {
+                int x_l = x_left[(int)(y - p0.Y)];
+                int x_r = x_right[(int)(y - p0.Y)];
+
+                var z_segment = Interpolate(x_l, z_left[(int)(y - p0.Y)], x_r, z_right[(int)(y - p0.Y)]);
+                for (int x = x_l; x < x_r; x++)
+                {
+                    float depth = z_segment[x - x_l];
+
+                    ApplyZBufferAlgorithm(x, y, 1, color);
+                }
+            }
+        }
+
+        public void ApplyZBufferAlgorithm(int x, int y, float depth, Color color)
+        {
+            if (depth > zBuffer[x, y])
+            {
+                frameBuffer[x, y] = color;
+                zBuffer[x, y] = depth;
+            }
+        }
     }
+}
 
     public class Polygon
     {
@@ -670,4 +842,3 @@ namespace Rogalik_s_3D
             this.polygons = polygons;
         }
     }
-}

@@ -38,6 +38,7 @@
             rotation = new Button();
             scale = new Button();
             panel1 = new Panel();
+            transformOk = new Button();
             rZ = new TextBox();
             rY = new TextBox();
             rX = new TextBox();
@@ -65,7 +66,7 @@
             rotationSplit = new TextBox();
             label3 = new Label();
             createRotation = new Button();
-            transformOk = new Button();
+            zBufferButton = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -178,6 +179,16 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(239, 128);
             panel1.TabIndex = 30;
+            // 
+            // transformOk
+            // 
+            transformOk.Location = new Point(92, 99);
+            transformOk.Name = "transformOk";
+            transformOk.Size = new Size(63, 29);
+            transformOk.TabIndex = 41;
+            transformOk.Text = "Ok";
+            transformOk.UseVisualStyleBackColor = true;
+            transformOk.Click += TransformOkClick;
             // 
             // rZ
             // 
@@ -445,15 +456,17 @@
             createRotation.UseVisualStyleBackColor = true;
             createRotation.Click += CreateRotationButton;
             // 
-            // transformOk
+            // zBufferButton
             // 
-            transformOk.Location = new Point(92, 99);
-            transformOk.Name = "transformOk";
-            transformOk.Size = new Size(63, 29);
-            transformOk.TabIndex = 41;
-            transformOk.Text = "Ok";
-            transformOk.UseVisualStyleBackColor = true;
-            transformOk.Click += TransformOkClick;
+            zBufferButton.BackgroundImage = (Image)resources.GetObject("zBufferButton.BackgroundImage");
+            zBufferButton.BackgroundImageLayout = ImageLayout.Stretch;
+            zBufferButton.FlatStyle = FlatStyle.Flat;
+            zBufferButton.Location = new Point(761, 608);
+            zBufferButton.Name = "zBufferButton";
+            zBufferButton.Size = new Size(32, 32);
+            zBufferButton.TabIndex = 41;
+            zBufferButton.UseVisualStyleBackColor = true;
+            zBufferButton.Click += zBufferButton_Click;
             // 
             // Form
             // 
@@ -461,6 +474,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.DimGray;
             ClientSize = new Size(1006, 721);
+            Controls.Add(zBufferButton);
             Controls.Add(left);
             Controls.Add(right);
             Controls.Add(panel4);
@@ -531,5 +545,6 @@
         private Label label3;
         private Button createRotation;
         private Button transformOk;
+        private Button zBufferButton;
     }
 }
