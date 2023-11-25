@@ -79,10 +79,10 @@ namespace Rogalik_s_3D
             points[2] = new Vector3(0, -downY, 2 * side);
             points[3] = new Vector3(0, upY, 0);
 
-            var VecNorm1 = NormalVec(points[0], points[1], points[2]);
-            var VecNorm2 = NormalVec(points[0], points[1], points[3]);
-            var VecNorm3 = NormalVec(points[1], points[2], points[3]);
-            var VecNorm4 = NormalVec(points[0], points[2], points[3]);
+            var VecNorm1 = VectorProduct(points[0], points[1], points[2]);
+            var VecNorm2 = VectorProduct(points[0], points[1], points[3]);
+            var VecNorm3 = VectorProduct(points[1], points[2], points[3]);
+            var VecNorm4 = VectorProduct(points[0], points[2], points[3]);
 
             Polygon[] polygons = new Polygon[4];
             polygons[0] = new(new int[] { 0, 1, 2 }, VecNorm1);
@@ -132,14 +132,14 @@ namespace Rogalik_s_3D
             points[4] = new Vector3(0, side, 0);
             points[5] = new Vector3(0, -side, 0);
 
-            var VecNorm1 = NormalVec(points[0], points[1], points[4]);
-            var VecNorm2 = NormalVec(points[1], points[2], points[4]);
-            var VecNorm3 = NormalVec(points[2], points[3], points[4]);
-            var VecNorm4 = NormalVec(points[3], points[0], points[4]);
-            var VecNorm5 = NormalVec(points[0], points[1], points[5]);
-            var VecNorm6 = NormalVec(points[1], points[2], points[5]);
-            var VecNorm7 = NormalVec(points[2], points[3], points[5]);
-            var VecNorm8 = NormalVec(points[3], points[0], points[5]);
+            var VecNorm1 = VectorProduct(points[0], points[1], points[4]);
+            var VecNorm2 = VectorProduct(points[1], points[2], points[4]);
+            var VecNorm3 = VectorProduct(points[2], points[3], points[4]);
+            var VecNorm4 = VectorProduct(points[3], points[0], points[4]);
+            var VecNorm5 = VectorProduct(points[0], points[1], points[5]);
+            var VecNorm6 = VectorProduct(points[1], points[2], points[5]);
+            var VecNorm7 = VectorProduct(points[2], points[3], points[5]);
+            var VecNorm8 = VectorProduct(points[3], points[0], points[5]);
 
             Polygon[] polygons = new Polygon[8];
             polygons[0] = new(new int[] { 0, 1, 4 }, VecNorm1);
@@ -199,7 +199,7 @@ namespace Rogalik_s_3D
                 new PointF(map.Width / 2 + p2.X * 100, map.Height / 2 - p2.Y * 100));
         }
 
-        private Vector3 NormalVec(Vector3 p1, Vector3 p2, Vector3 p3)
+        private Vector3 VectorProduct(Vector3 p1, Vector3 p2, Vector3 p3)
         {
             Vector3 result = new Vector3();
 
@@ -214,8 +214,8 @@ namespace Rogalik_s_3D
         }
 
         private Vector3 Normal(Vector3 vector)
-        {
-            return vector / vector.Length();
+        {        
+            return new Vector3(vector.X / vector.Length(), vector.Y / vector.Length(), vector.Z / vector.Length());
         }
 
         float[] Multiplication(Vector3 point, float[,] matrix)
@@ -237,11 +237,6 @@ namespace Rogalik_s_3D
                     for (int k = 0; k < 4; k++)
                         resMatrix[i, j] += matrix1[i, k] * matrix2[k, j];
             return resMatrix;
-        }
-
-        static Vector3 CrossProduct(Vector3 v1, Vector3 v2)
-        {
-            return new(v1.Y * v2.Z - v1.Z * v2.Y, v1.Z * v2.X - v1.X * v2.Z, v1.X * v2.Y - v1.Y * v2.X);
         }
 
         void Shift(ref Polyhedron polyhedron, Vector3 vector)
@@ -915,22 +910,29 @@ namespace Rogalik_s_3D
         private void NonFacialButton_Click(object sender, EventArgs e)
         {
             graphics.Clear(pictureBox.BackColor);
-
             var polyhedron = polyhedrons[0];
-            var VecView = Normal(cameraPosition);
 
             foreach (var poly in polyhedron.polygons)
             {
+                Vector3[] vertex = new Vector3[3];
+                for (int i = 0; i < 3; i++)
+                    vertex[i] = polyhedron.points[poly.indexes[i]];
+                Vector3 vec = new Vector3();
+                vec.X = (vertex[0].X + vertex[1].X + vertex[2].X) / 3 - cameraPosition.X;
+                vec.Y = (vertex[0].Y + vertex[1].Y + vertex[2].Y) / 3 - cameraPosition.Y;
+                vec.Z = (vertex[0].Z + vertex[1].Z + vertex[2].Z) / 3 - cameraPosition.Z;
+
+                var VecView = Normal(vec);
+
                 float scalarProduct = poly.normal.X * VecView.X 
                     + poly.normal.Y * VecView.Y + poly.normal.Z * VecView.Z;
-                if (scalarProduct > 0)
+                double angle = Math.Acos(scalarProduct/poly.normal.Length() * VecView.Length());
+                angle = angle * 180 / Math.PI;
+                if (angle > 90)
                 {
-                    Vector3[] vertex = new Vector3[3];
-                    for (int i = 0; i < 3; i++)
-                        vertex[i] = polyhedron.points[poly.indexes[i]];
                     DrawLine(vertex[0], vertex[1]);
-                    DrawLine(vertex[0], vertex[2]);
                     DrawLine(vertex[1], vertex[2]);
+                    DrawLine(vertex[0], vertex[2]);
                 }
             }
 
