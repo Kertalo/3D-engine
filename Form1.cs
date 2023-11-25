@@ -79,11 +79,16 @@ namespace Rogalik_s_3D
             points[2] = new Vector3(0, -downY, 2 * side);
             points[3] = new Vector3(0, upY, 0);
 
+            var VecNorm1 = NormalVec(points[0], points[1], points[2]);
+            var VecNorm2 = NormalVec(points[0], points[1], points[3]);
+            var VecNorm3 = NormalVec(points[1], points[2], points[3]);
+            var VecNorm4 = NormalVec(points[0], points[2], points[3]);
+
             Polygon[] polygons = new Polygon[4];
-            polygons[0] = new(new int[] { 0, 1, 2 });
-            polygons[1] = new(new int[] { 0, 1, 3 });
-            polygons[2] = new(new int[] { 1, 2, 3 });
-            polygons[3] = new(new int[] { 0, 2, 3 });
+            polygons[0] = new(new int[] { 0, 1, 2 }, VecNorm1);
+            polygons[1] = new(new int[] { 0, 1, 3 }, VecNorm2);
+            polygons[2] = new(new int[] { 1, 2, 3 }, VecNorm3);
+            polygons[3] = new(new int[] { 0, 2, 3 }, VecNorm4);
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
@@ -127,15 +132,24 @@ namespace Rogalik_s_3D
             points[4] = new Vector3(0, side, 0);
             points[5] = new Vector3(0, -side, 0);
 
+            var VecNorm1 = NormalVec(points[0], points[1], points[4]);
+            var VecNorm2 = NormalVec(points[1], points[2], points[4]);
+            var VecNorm3 = NormalVec(points[2], points[3], points[4]);
+            var VecNorm4 = NormalVec(points[3], points[0], points[4]);
+            var VecNorm5 = NormalVec(points[0], points[1], points[5]);
+            var VecNorm6 = NormalVec(points[1], points[2], points[5]);
+            var VecNorm7 = NormalVec(points[2], points[3], points[5]);
+            var VecNorm8 = NormalVec(points[3], points[0], points[5]);
+
             Polygon[] polygons = new Polygon[8];
-            polygons[0] = new(new int[] { 0, 1, 4 });
-            polygons[1] = new(new int[] { 1, 2, 4 });
-            polygons[2] = new(new int[] { 2, 3, 4 });
-            polygons[3] = new(new int[] { 3, 0, 4 });
-            polygons[4] = new(new int[] { 0, 1, 5 });
-            polygons[5] = new(new int[] { 1, 2, 5 });
-            polygons[6] = new(new int[] { 2, 3, 5 });
-            polygons[7] = new(new int[] { 3, 0, 5 });
+            polygons[0] = new(new int[] { 0, 1, 4 }, VecNorm1);
+            polygons[1] = new(new int[] { 1, 2, 4 }, VecNorm2);
+            polygons[2] = new(new int[] { 2, 3, 4 }, VecNorm3);
+            polygons[3] = new(new int[] { 3, 0, 4 }, VecNorm4);
+            polygons[4] = new(new int[] { 0, 1, 5 }, VecNorm5);
+            polygons[5] = new(new int[] { 1, 2, 5 }, VecNorm6);
+            polygons[6] = new(new int[] { 2, 3, 5 }, VecNorm7);
+            polygons[7] = new(new int[] { 3, 0, 5 }, VecNorm8);
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
@@ -183,6 +197,20 @@ namespace Rogalik_s_3D
         {
             graphics.DrawLine(pen, new PointF(map.Width / 2 + p1.X * 100, map.Height / 2 - p1.Y * 100),
                 new PointF(map.Width / 2 + p2.X * 100, map.Height / 2 - p2.Y * 100));
+        }
+
+        private Vector3 NormalVec(Vector3 p1, Vector3 p2, Vector3 p3)
+        {
+            Vector3 result = new Vector3();
+
+            Vector3 v1 = new Vector3(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+            Vector3 v2 = new Vector3(p3.X - p1.X, p3.Y - p1.Y, p3.Z - p1.Z);
+
+            result.X = v1.Y * v2.Z - v1.Z * v2.Y;
+            result.Y = v1.Z * v2.X - v1.X * v2.Z;
+            result.Z = v1.X * v2.Y - v1.Y * v2.X;
+
+            return Normal(result);
         }
 
         private Vector3 Normal(Vector3 vector)
@@ -477,8 +505,6 @@ namespace Rogalik_s_3D
             }
         }
 
-        //float x = 0;
-
         private void PictureBoxMouseMove(object sender, MouseEventArgs e)
         {
             /*x += 0.5f;
@@ -740,18 +766,18 @@ namespace Rogalik_s_3D
                         vertex[i] = polyhedron.points[poly.indexes[i]];
 
                     var p1 = vertex[0];
-                    p1.X = (int)(map.Width / 2 + p1.X * 100);
-                    p1.Y = (int)(map.Height / 2 - p1.Y * 100);
+                    p1.X = (int)(map.Width / 2 + p1.X * 100 + polyhedron.point.X * 100);
+                    p1.Y = (int)(map.Height / 2 - p1.Y * 100 - polyhedron.point.Y * 100);
                     p1.Z = (int)(p1.Z * 100);
 
                     var p2 = vertex[1];
-                    p2.X = (int)(map.Width / 2 + p2.X * 100);
-                    p2.Y = (int)(map.Height / 2 - p2.Y * 100);
+                    p2.X = (int)(map.Width / 2 + p2.X * 100 + polyhedron.point.X * 100);
+                    p2.Y = (int)(map.Height / 2 - p2.Y * 100) - polyhedron.point.Y * 100;
                     p2.Z = (int)(p2.Z * 100);
 
                     var p3 = vertex[2];
-                    p3.X = (int)(map.Width / 2 + p3.X * 100);
-                    p3.Y = (int)(map.Height / 2 - p3.Y * 100);
+                    p3.X = (int)(map.Width / 2 + p3.X * 100 + polyhedron.point.X * 100);
+                    p3.Y = (int)(map.Height / 2 - p3.Y * 100 - polyhedron.point.Y * 100);
                     p3.Z = (int)(p3.Z * 100);
 
                     map.SetPixel((int)p1.X, (int)p1.Y, Color.White);
@@ -763,11 +789,11 @@ namespace Rogalik_s_3D
                 }
             }
 
-             for (int i = 0; i < pictureBox.Width; i++)
+            for (int i = 0; i < pictureBox.Width; i++)
                 for (int j = 0; j < pictureBox.Height; j++)
                     map.SetPixel(i, j, frameBuffer[i, j]);
 
-             pictureBox.Image = map;
+            pictureBox.Image = map;
         }
 
         private void ClearBuffers()
@@ -845,7 +871,7 @@ namespace Rogalik_s_3D
             List<int> x_right;
             List<int> z_left;
             List<int> z_right;
-            if (x02[m] < x012[m]) 
+            if (x02[m] < x012[m])
             {
                 x_left = x02;
                 x_right = x012;
@@ -862,7 +888,7 @@ namespace Rogalik_s_3D
                 z_right = z02;
             }
 
-            for (int y = (int)p0.Y; y < (int)p2.Y - 1; y++) 
+            for (int y = (int)p0.Y; y < (int)p2.Y - 1; y++)
             {
                 int x_l = x_left[(int)(y - p0.Y)];
                 int x_r = x_right[(int)(y - p0.Y)];
@@ -872,7 +898,7 @@ namespace Rogalik_s_3D
                 {
                     float depth = z_segment[x - x_l];
 
-                    ApplyZBufferAlgorithm(x, y, 1, color);
+                    ApplyZBufferAlgorithm(x, y, depth, color);
                 }
             }
         }
@@ -884,6 +910,31 @@ namespace Rogalik_s_3D
                 frameBuffer[x, y] = color;
                 zBuffer[x, y] = depth;
             }
+        }
+
+        private void NonFacialButton_Click(object sender, EventArgs e)
+        {
+            graphics.Clear(pictureBox.BackColor);
+
+            var polyhedron = polyhedrons[0];
+            var VecView = Normal(cameraPosition);
+
+            foreach (var poly in polyhedron.polygons)
+            {
+                float scalarProduct = poly.normal.X * VecView.X 
+                    + poly.normal.Y * VecView.Y + poly.normal.Z * VecView.Z;
+                if (scalarProduct > 0)
+                {
+                    Vector3[] vertex = new Vector3[3];
+                    for (int i = 0; i < 3; i++)
+                        vertex[i] = polyhedron.points[poly.indexes[i]];
+                    DrawLine(vertex[0], vertex[1]);
+                    DrawLine(vertex[0], vertex[2]);
+                    DrawLine(vertex[1], vertex[2]);
+                }
+            }
+
+            pictureBox.Image = map;
         }
     }
 }

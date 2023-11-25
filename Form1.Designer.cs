@@ -38,6 +38,9 @@
             rotation = new Button();
             scale = new Button();
             panel1 = new Panel();
+            rZ = new TextBox();
+            rY = new TextBox();
+            rX = new TextBox();
             transformOk = new Button();
             uZ = new TextBox();
             uY = new TextBox();
@@ -67,9 +70,7 @@
             label3 = new Label();
             createRotation = new Button();
             zBufferButton = new Button();
-            rX = new TextBox();
-            rY = new TextBox();
-            rZ = new TextBox();
+            NonFacialButton = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -185,6 +186,27 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(239, 171);
             panel1.TabIndex = 30;
+            // 
+            // rZ
+            // 
+            rZ.Location = new Point(184, 101);
+            rZ.Name = "rZ";
+            rZ.Size = new Size(55, 27);
+            rZ.TabIndex = 44;
+            // 
+            // rY
+            // 
+            rY.Location = new Point(108, 101);
+            rY.Name = "rY";
+            rY.Size = new Size(55, 27);
+            rY.TabIndex = 43;
+            // 
+            // rX
+            // 
+            rX.Location = new Point(28, 101);
+            rX.Name = "rX";
+            rX.Size = new Size(55, 27);
+            rX.TabIndex = 42;
             // 
             // transformOk
             // 
@@ -473,26 +495,18 @@
             zBufferButton.TabIndex = 41;
             zBufferButton.UseVisualStyleBackColor = true;
             zBufferButton.Click += zBufferButton_Click;
-            // rX
             // 
-            rX.Location = new Point(28, 101);
-            rX.Name = "rX";
-            rX.Size = new Size(55, 27);
-            rX.TabIndex = 42;
+            // NonFacialButton
             // 
-            // rY
-            // 
-            rY.Location = new Point(108, 101);
-            rY.Name = "rY";
-            rY.Size = new Size(55, 27);
-            rY.TabIndex = 43;
-            // 
-            // rZ
-            // 
-            rZ.Location = new Point(184, 101);
-            rZ.Name = "rZ";
-            rZ.Size = new Size(55, 27);
-            rZ.TabIndex = 44;
+            NonFacialButton.BackgroundImage = (Image)resources.GetObject("NonFacialButton.BackgroundImage");
+            NonFacialButton.BackgroundImageLayout = ImageLayout.Stretch;
+            NonFacialButton.FlatStyle = FlatStyle.Flat;
+            NonFacialButton.Location = new Point(761, 568);
+            NonFacialButton.Name = "NonFacialButton";
+            NonFacialButton.Size = new Size(32, 32);
+            NonFacialButton.TabIndex = 42;
+            NonFacialButton.UseVisualStyleBackColor = true;
+            NonFacialButton.Click += NonFacialButton_Click;
             // 
             // Form
             // 
@@ -500,6 +514,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.DimGray;
             ClientSize = new Size(1006, 721);
+            Controls.Add(NonFacialButton);
             Controls.Add(zBufferButton);
             Controls.Add(left);
             Controls.Add(right);
@@ -575,5 +590,6 @@
         private TextBox rZ;
         private TextBox rY;
         private TextBox rX;
+        private Button NonFacialButton;
     }
 }
