@@ -109,13 +109,19 @@ namespace Rogalik_s_3D
             points[6] = new Vector3(side, side, side);
             points[7] = new Vector3(-side, side, side);
 
-            Polygon[] polygons = new Polygon[6];
-            polygons[0] = new(new int[] { 0, 1, 2, 3 }, new(0, -1, 0));
-            polygons[1] = new(new int[] { 0, 1, 5, 4 }, new(0, 0, -1));
-            polygons[2] = new(new int[] { 0, 3, 7, 4 }, new(-1, 0, 0));
-            polygons[3] = new(new int[] { 1, 2, 6, 5 }, new(1, 0, 0));
-            polygons[4] = new(new int[] { 2, 3, 7, 6 }, new(0, 0, 1));
-            polygons[5] = new(new int[] { 4, 5, 6, 7 }, new(0, 1, 0));
+            Polygon[] polygons = new Polygon[12];
+            polygons[0] = new(new int[] { 0, 1, 2 }, VectorProduct(points[0], points[1], points[2]));
+            polygons[1] = new(new int[] { 0, 2, 3 }, VectorProduct(points[0], points[2], points[3]));
+            polygons[2] = new(new int[] { 0, 1, 5,}, VectorProduct(points[0], points[1], points[5]));
+            polygons[3] = new(new int[] { 0, 5, 4 }, VectorProduct(points[0], points[5], points[4]));
+            polygons[4] = new(new int[] { 0, 3, 7 }, VectorProduct(points[0], points[3], points[7]));
+            polygons[5] = new(new int[] { 0, 7, 4 }, VectorProduct(points[0], points[7], points[4]));
+            polygons[6] = new(new int[] { 1, 2, 6 }, VectorProduct(points[1], points[2], points[6]));
+            polygons[7] = new(new int[] { 1, 6, 5 }, VectorProduct(points[1], points[6], points[5]));
+            polygons[8] = new(new int[] { 2, 3, 7 }, VectorProduct(points[2], points[3], points[7]));
+            polygons[9] = new(new int[] { 2, 7, 6 }, VectorProduct(points[2], points[7], points[6]));
+            polygons[10] = new(new int[] { 4, 5, 6 }, VectorProduct(points[4], points[5], points[6]));
+            polygons[11] = new(new int[] { 4, 6, 7 }, VectorProduct(points[4], points[6], points[7]));
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
