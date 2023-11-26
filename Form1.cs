@@ -9,6 +9,7 @@ namespace Rogalik_s_3D
     public partial class Form : System.Windows.Forms.Form
     {
         Bitmap map;
+        Bitmap texture;
         Graphics graphics;
         Pen pen = new Pen(Color.White, 3);
 
@@ -203,8 +204,8 @@ namespace Rogalik_s_3D
         {
             Vector3 result = new Vector3();
 
-            Vector3 v1 = new Vector3(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
-            Vector3 v2 = new Vector3(p3.X - p1.X, p3.Y - p1.Y, p3.Z - p1.Z);
+            Vector3 v1 = new Vector3(p1.X - p2.X, p1.Y - p2.Y, p1.Z - p2.Z);
+            Vector3 v2 = new Vector3(p1.X - p3.X, p1.Y - p3.Y, p1.Z - p3.Z);
 
             result.X = v1.Y * v2.Z - v1.Z * v2.Y;
             result.Y = v1.Z * v2.X - v1.X * v2.Z;
@@ -214,7 +215,7 @@ namespace Rogalik_s_3D
         }
 
         private Vector3 Normal(Vector3 vector)
-        {        
+        {
             return new Vector3(vector.X / vector.Length(), vector.Y / vector.Length(), vector.Z / vector.Length());
         }
 
@@ -775,9 +776,6 @@ namespace Rogalik_s_3D
                     p3.Y = (int)(map.Height / 2 - p3.Y * 100 - polyhedron.point.Y * 100);
                     p3.Z = (int)(p3.Z * 100);
 
-                    map.SetPixel((int)p1.X, (int)p1.Y, Color.White);
-                    map.SetPixel((int)p2.X, (int)p2.Y, Color.White);
-                    map.SetPixel((int)p3.X, (int)p3.Y, Color.White);
                     Random rnd = new Random();
                     var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
                     ConvertToRaster(ref p1, ref p2, ref p3, color);
@@ -924,11 +922,9 @@ namespace Rogalik_s_3D
 
                 var VecView = Normal(vec);
 
-                float scalarProduct = poly.normal.X * VecView.X 
+                float scalarProduct = poly.normal.X * VecView.X
                     + poly.normal.Y * VecView.Y + poly.normal.Z * VecView.Z;
-                double angle = Math.Acos(scalarProduct/poly.normal.Length() * VecView.Length());
-                angle = angle * 180 / Math.PI;
-                if (angle > 90)
+                if (scalarProduct > 0)
                 {
                     DrawLine(vertex[0], vertex[1]);
                     DrawLine(vertex[1], vertex[2]);
@@ -937,6 +933,187 @@ namespace Rogalik_s_3D
             }
 
             pictureBox.Image = map;
+        }
+
+        private void TextureButton_Click(object sender, EventArgs e)
+        {
+            texture = new Bitmap("../../../textures/mem2.png");
+
+            zBuffer = new float[pictureBox.Width, pictureBox.Height];
+            frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
+
+            ClearBuffers();
+            graphics.Clear(pictureBox.BackColor);
+
+            foreach (Polyhedron polyhedron in polyhedrons) 
+            {
+                foreach (Polygon polygon in polyhedron.polygons)
+                {
+                    Vector3[] polygonVertex = new Vector3[3];
+                    for (int i = 0; i < 3; i++)
+                        polygonVertex[i] = polyhedron.points[polygon.indexes[i]];
+
+                    Vector2[] textureVertex = new Vector2[3];
+                    textureVertex[0] = new Vector2(0, 0);
+                    textureVertex[1] = new Vector2(0, 1);
+                    textureVertex[0] = new Vector2(1, 0);
+
+                    var p1 = polygonVertex[0];
+                    p1.X = (int)(map.Width / 2 + p1.X * 100 + polyhedron.point.X * 100);
+                    p1.Y = (int)(map.Height / 2 - p1.Y * 100 - polyhedron.point.Y * 100);
+                    p1.Z = (int)(p1.Z * 100);
+
+                    var p2 = polygonVertex[1];
+                    p2.X = (int)(map.Width / 2 + p2.X * 100 + polyhedron.point.X * 100);
+                    p2.Y = (int)(map.Height / 2 - p2.Y * 100) - polyhedron.point.Y * 100;
+                    p2.Z = (int)(p2.Z * 100);
+
+                    var p3 = polygonVertex[2];
+                    p3.X = (int)(map.Width / 2 + p3.X * 100 + polyhedron.point.X * 100);
+                    p3.Y = (int)(map.Height / 2 - p3.Y * 100 - polyhedron.point.Y * 100);
+                    p3.Z = (int)(p3.Z * 100);
+
+                    ConvertToRasterWithTexture(ref p1, ref p2, ref p3, 
+                        textureVertex[0], textureVertex[1], textureVertex[2]);
+                }
+            }
+
+            for (int i = 0; i < pictureBox.Width; i++)
+                for (int j = 0; j < pictureBox.Height; j++)
+                    map.SetPixel(i, j, frameBuffer[i, j]);
+
+            pictureBox.Image = map;
+        }
+
+        private List<Vector2> InterpolateTexture(int x1, Vector2 t1, int x2, Vector2 t2)
+        {
+            List<Vector2> res = new List<Vector2>();
+            if (x1 == x2)
+            {
+                res.Add(t1);
+            }
+            Vector2 step = new Vector2((t2.X - t1.X) / (x2 - x1), (t2.Y - t1.Y) / (x2 - x1));
+
+            Vector2 y = t1;
+            for (int i = x1; i <= x2; i++)
+            {
+                res.Add(y);
+                y.X += step.X;
+                y.Y += step.Y;
+            }
+            return res;
+        }
+
+        public void ApplyZBufferAlgorithmWithTexture(int x, int y, float depth, Vector2 color)
+        {
+            if (depth > zBuffer[x, y])
+            {
+                int tx = (int)(color.X * (texture.Width - 1));
+                int ty = (int)(color.Y * (texture.Height - 1));
+                frameBuffer[x, y] = texture.GetPixel(tx, ty);
+                zBuffer[x, y] = depth;
+            }
+        }
+
+        private void ConvertToRasterWithTexture(ref Vector3 p0, ref Vector3 p1, ref Vector3 p2, 
+            Vector2 tp0, Vector2 tp1, Vector2 tp2)
+        {
+            if (p1.Y < p0.Y)
+            {
+                var temp = p0;
+                p0 = p1;
+                p1 = temp;
+            }
+
+            if (p2.Y < p0.Y)
+            {
+                var temp = p0;
+                p0 = p2;
+                p2 = temp;
+            }
+
+            if (p2.Y < p1.Y)
+            {
+                var temp = p2;
+                p2 = p1;
+                p1 = temp;
+            }
+
+            var x01 = Interpolate((int)p0.Y, (int)p0.X, (int)p1.Y, (int)p1.X);
+            var x12 = Interpolate((int)p1.Y, (int)p1.X, (int)p2.Y, (int)p2.X);
+            var x02 = Interpolate((int)p0.Y, (int)p0.X, (int)p2.Y, (int)p2.X);
+
+            var z01 = Interpolate((int)p0.Y, (int)p0.Z, (int)p1.Y, (int)p1.Z);
+            var z12 = Interpolate((int)p1.Y, (int)p1.Z, (int)p2.Y, (int)p2.Z);
+            var z02 = Interpolate((int)p0.Y, (int)p0.Z, (int)p2.Y, (int)p2.Z);
+
+            var t01 = InterpolateTexture((int)p0.Y, tp0, (int)p1.Y, tp1);
+            var t12 = InterpolateTexture((int)p1.Y, tp1, (int)p2.Y, tp2);
+            var t02 = InterpolateTexture((int)p0.Y, tp0, (int)p2.Y, tp2);
+
+            x01.Remove(x01.Last());
+            List<int> x012 = new List<int>();
+            x012.AddRange(x01);
+            x012.AddRange(x12);
+
+            z01.Remove(z01.Last());
+            List<int> z012 = new List<int>();
+            z012.AddRange(z01);
+            z012.AddRange(z12);
+
+            t01.Remove(t01.Last());
+            List<Vector2> t012 = new List<Vector2>();
+            t012.AddRange(t01);
+            t012.AddRange(t12);
+
+            var m = x012.Count / 2;
+            List<int> x_left;
+            List<int> x_right;
+
+            List<int> z_left;
+            List<int> z_right;
+
+            List<Vector2> lefttexture = new List<Vector2>();
+            List<Vector2> righttexture = new List<Vector2>();
+
+            if (x02[m] < x012[m])
+            {
+                x_left = x02;
+                x_right = x012;
+
+                z_left = z02;
+                z_right = z012;
+
+                lefttexture = t02;
+                righttexture = t012;
+            }
+            else
+            {
+                x_left = x012;
+                x_right = x02;
+
+                z_left = z012;
+                z_right = z02;
+
+                lefttexture = t012;
+                righttexture = t02;
+            }
+
+
+            for (int y = (int)p0.Y; y < (int)p2.Y - 1; y++)
+            {
+                int x_l = x_left[(int)(y - p0.Y)];
+                int x_r = x_right[(int)(y - p0.Y)];
+
+                var z_segment = Interpolate(x_l, z_left[(int)(y - p0.Y)], x_r, z_right[(int)(y - p0.Y)]);
+                var texture_segment = InterpolateTexture(x_l, lefttexture[(int)(y - p0.Y)], x_r, righttexture[(int)(y - p0.Y)]);
+                for (int x = x_l; x < x_r; x++)
+                {
+                    float depth = z_segment[x - x_l];
+
+                    ApplyZBufferAlgorithmWithTexture(x, y, depth, texture_segment[x - x_l]);
+                }
+            }
         }
     }
 }

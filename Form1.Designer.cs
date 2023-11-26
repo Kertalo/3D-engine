@@ -71,6 +71,7 @@
             createRotation = new Button();
             zBufferButton = new Button();
             NonFacialButton = new Button();
+            TextureButton = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -508,12 +509,25 @@
             NonFacialButton.UseVisualStyleBackColor = true;
             NonFacialButton.Click += NonFacialButton_Click;
             // 
+            // TextureButton
+            // 
+            TextureButton.BackgroundImage = (Image)resources.GetObject("TextureButton.BackgroundImage");
+            TextureButton.BackgroundImageLayout = ImageLayout.Stretch;
+            TextureButton.FlatStyle = FlatStyle.Flat;
+            TextureButton.Location = new Point(815, 568);
+            TextureButton.Name = "TextureButton";
+            TextureButton.Size = new Size(32, 32);
+            TextureButton.TabIndex = 43;
+            TextureButton.UseVisualStyleBackColor = true;
+            TextureButton.Click += TextureButton_Click;
+            // 
             // Form
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.DimGray;
             ClientSize = new Size(1006, 721);
+            Controls.Add(TextureButton);
             Controls.Add(NonFacialButton);
             Controls.Add(zBufferButton);
             Controls.Add(left);
@@ -591,5 +605,6 @@
         private TextBox rY;
         private TextBox rX;
         private Button NonFacialButton;
+        private Button TextureButton;
     }
 }
