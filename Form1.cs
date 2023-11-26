@@ -59,8 +59,8 @@ namespace Rogalik_s_3D
         private void SetCamera(Vector3 point, Vector3 vector1, Vector3 vector2)
         {
             cameraPosition = point;
-            cameraUp = Normal(vector1);
-            cameraRight = Normal(vector2);
+            cameraUp = Normalize(vector1);
+            cameraRight = Normalize(vector2);
             pX.Text = cameraPosition.X.ToString();
             pY.Text = cameraPosition.Y.ToString();
             pZ.Text = cameraPosition.Z.ToString();
@@ -80,16 +80,11 @@ namespace Rogalik_s_3D
             points[2] = new Vector3(0, -downY, 2 * side);
             points[3] = new Vector3(0, upY, 0);
 
-            var VecNorm1 = VectorProduct(points[0], points[1], points[2]);
-            var VecNorm2 = VectorProduct(points[0], points[1], points[3]);
-            var VecNorm3 = VectorProduct(points[1], points[2], points[3]);
-            var VecNorm4 = VectorProduct(points[0], points[2], points[3]);
-
             Polygon[] polygons = new Polygon[4];
-            polygons[0] = new(new int[] { 0, 1, 2 }, VecNorm1);
-            polygons[1] = new(new int[] { 0, 1, 3 }, VecNorm2);
-            polygons[2] = new(new int[] { 1, 2, 3 }, VecNorm3);
-            polygons[3] = new(new int[] { 0, 2, 3 }, VecNorm4);
+            polygons[0] = new(new int[] { 0, 1, 2 }, NormolizeVectorCrossProduct(points[0], points[1], points[2]));
+            polygons[1] = new(new int[] { 0, 1, 3 }, NormolizeVectorCrossProduct(points[0], points[1], points[3]));
+            polygons[2] = new(new int[] { 1, 2, 3 }, NormolizeVectorCrossProduct(points[1], points[2], points[3]));
+            polygons[3] = new(new int[] { 0, 2, 3 }, NormolizeVectorCrossProduct(points[0], points[2], points[3]));
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
@@ -110,18 +105,18 @@ namespace Rogalik_s_3D
             points[7] = new Vector3(-side, side, side);
 
             Polygon[] polygons = new Polygon[12];
-            polygons[0] = new(new int[] { 0, 1, 2 }, VectorProduct(points[0], points[1], points[2]));
-            polygons[1] = new(new int[] { 0, 2, 3 }, VectorProduct(points[0], points[2], points[3]));
-            polygons[2] = new(new int[] { 0, 1, 5,}, VectorProduct(points[0], points[1], points[5]));
-            polygons[3] = new(new int[] { 0, 5, 4 }, VectorProduct(points[0], points[5], points[4]));
-            polygons[4] = new(new int[] { 0, 3, 7 }, VectorProduct(points[0], points[3], points[7]));
-            polygons[5] = new(new int[] { 0, 7, 4 }, VectorProduct(points[0], points[7], points[4]));
-            polygons[6] = new(new int[] { 1, 2, 6 }, VectorProduct(points[1], points[2], points[6]));
-            polygons[7] = new(new int[] { 1, 6, 5 }, VectorProduct(points[1], points[6], points[5]));
-            polygons[8] = new(new int[] { 2, 3, 7 }, VectorProduct(points[2], points[3], points[7]));
-            polygons[9] = new(new int[] { 2, 7, 6 }, VectorProduct(points[2], points[7], points[6]));
-            polygons[10] = new(new int[] { 4, 5, 6 }, VectorProduct(points[4], points[5], points[6]));
-            polygons[11] = new(new int[] { 4, 6, 7 }, VectorProduct(points[4], points[6], points[7]));
+            polygons[0] = new(new int[] { 0, 1, 2 }, NormolizeVectorCrossProduct(points[0], points[1], points[2]));
+            polygons[1] = new(new int[] { 0, 2, 3 }, NormolizeVectorCrossProduct(points[0], points[2], points[3]));
+            polygons[2] = new(new int[] { 0, 1, 5,}, NormolizeVectorCrossProduct(points[0], points[1], points[5]));
+            polygons[3] = new(new int[] { 0, 5, 4 }, NormolizeVectorCrossProduct(points[0], points[5], points[4]));
+            polygons[4] = new(new int[] { 0, 3, 7 }, NormolizeVectorCrossProduct(points[0], points[3], points[7]));
+            polygons[5] = new(new int[] { 0, 7, 4 }, NormolizeVectorCrossProduct(points[0], points[7], points[4]));
+            polygons[6] = new(new int[] { 1, 2, 6 }, NormolizeVectorCrossProduct(points[1], points[2], points[6]));
+            polygons[7] = new(new int[] { 1, 6, 5 }, NormolizeVectorCrossProduct(points[1], points[6], points[5]));
+            polygons[8] = new(new int[] { 2, 3, 7 }, NormolizeVectorCrossProduct(points[2], points[3], points[7]));
+            polygons[9] = new(new int[] { 2, 7, 6 }, NormolizeVectorCrossProduct(points[2], points[7], points[6]));
+            polygons[10] = new(new int[] { 4, 5, 6 }, NormolizeVectorCrossProduct(points[4], points[5], points[6]));
+            polygons[11] = new(new int[] { 4, 6, 7 }, NormolizeVectorCrossProduct(points[4], points[6], points[7]));
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
@@ -139,24 +134,15 @@ namespace Rogalik_s_3D
             points[4] = new Vector3(0, side, 0);
             points[5] = new Vector3(0, -side, 0);
 
-            var VecNorm1 = VectorProduct(points[0], points[1], points[4]);
-            var VecNorm2 = VectorProduct(points[1], points[2], points[4]);
-            var VecNorm3 = VectorProduct(points[2], points[3], points[4]);
-            var VecNorm4 = VectorProduct(points[3], points[0], points[4]);
-            var VecNorm5 = VectorProduct(points[0], points[1], points[5]);
-            var VecNorm6 = VectorProduct(points[1], points[2], points[5]);
-            var VecNorm7 = VectorProduct(points[2], points[3], points[5]);
-            var VecNorm8 = VectorProduct(points[3], points[0], points[5]);
-
             Polygon[] polygons = new Polygon[8];
-            polygons[0] = new(new int[] { 0, 1, 4 }, VecNorm1);
-            polygons[1] = new(new int[] { 1, 2, 4 }, VecNorm2);
-            polygons[2] = new(new int[] { 2, 3, 4 }, VecNorm3);
-            polygons[3] = new(new int[] { 3, 0, 4 }, VecNorm4);
-            polygons[4] = new(new int[] { 0, 1, 5 }, VecNorm5);
-            polygons[5] = new(new int[] { 1, 2, 5 }, VecNorm6);
-            polygons[6] = new(new int[] { 2, 3, 5 }, VecNorm7);
-            polygons[7] = new(new int[] { 3, 0, 5 }, VecNorm8);
+            polygons[0] = new(new int[] { 0, 1, 4 }, NormolizeVectorCrossProduct(points[0], points[1], points[4]));
+            polygons[1] = new(new int[] { 1, 2, 4 }, NormolizeVectorCrossProduct(points[1], points[2], points[4]));
+            polygons[2] = new(new int[] { 2, 3, 4 }, NormolizeVectorCrossProduct(points[2], points[3], points[4]));
+            polygons[3] = new(new int[] { 3, 0, 4 }, NormolizeVectorCrossProduct(points[3], points[0], points[4]));
+            polygons[4] = new(new int[] { 0, 1, 5 }, NormolizeVectorCrossProduct(points[0], points[1], points[5]));
+            polygons[5] = new(new int[] { 1, 2, 5 }, NormolizeVectorCrossProduct(points[1], points[2], points[5]));
+            polygons[6] = new(new int[] { 2, 3, 5 }, NormolizeVectorCrossProduct(points[2], points[3], points[5]));
+            polygons[7] = new(new int[] { 3, 0, 5 }, NormolizeVectorCrossProduct(points[3], points[0], points[5]));
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
@@ -206,23 +192,24 @@ namespace Rogalik_s_3D
                 new PointF(map.Width / 2 + p2.X * 100, map.Height / 2 - p2.Y * 100));
         }
 
-        private Vector3 VectorProduct(Vector3 p1, Vector3 p2, Vector3 p3)
+        private Vector3 NormolizeVectorCrossProduct(Vector3 p1, Vector3 p2, Vector3 p3)
         {
             Vector3 result = new Vector3();
 
-            Vector3 v1 = new Vector3(p1.X - p2.X, p1.Y - p2.Y, p1.Z - p2.Z);
-            Vector3 v2 = new Vector3(p1.X - p3.X, p1.Y - p3.Y, p1.Z - p3.Z);
+            Vector3 v1 = new Vector3(p2.X - p1.X, p2.Y - p1.Y, p2.Z - p1.Z);
+            Vector3 v2 = new Vector3(p3.X - p1.X, p3.Y - p1.Y, p3.Z - p1.Z);
 
             result.X = v1.Y * v2.Z - v1.Z * v2.Y;
             result.Y = v1.Z * v2.X - v1.X * v2.Z;
             result.Z = v1.X * v2.Y - v1.Y * v2.X;
 
-            return Normal(result);
+            return Normalize(result);
         }
 
-        private Vector3 Normal(Vector3 vector)
+        private Vector3 Normalize(Vector3 vector)
         {
-            return new Vector3(vector.X / vector.Length(), vector.Y / vector.Length(), vector.Z / vector.Length());
+            float length = (float)Math.Sqrt(vector.X * vector.X + vector.Y * vector.Y + vector.Z * vector.Z);
+            return new Vector3(vector.X / length, vector.Y / length, vector.Z / length);
         }
 
         float[] Multiplication(Vector3 point, float[,] matrix)
@@ -325,7 +312,7 @@ namespace Rogalik_s_3D
 
         void AxonometricProjection()
         {
-            cameraRotation = Normal(new(-cameraRight.Z, 0, cameraRight.X));
+            cameraRotation = Normalize(new(-cameraRight.Z, 0, cameraRight.X));
             Vector3[][] points = new Vector3[polyhedrons.Count][];
             for (int i = 0; i < polyhedrons.Count; i++)
             {
@@ -742,8 +729,8 @@ namespace Rogalik_s_3D
                 float.TryParse(rZ.Text, out float rz))
             {
                 cameraPosition = new(px, py, pz);
-                cameraUp = Normal(new(ux, uy, uz));
-                cameraRight = Normal(new(rx, ry, rz));
+                cameraUp = Normalize(new(ux, uy, uz));
+                cameraRight = Normalize(new(rx, ry, rz));
 
                 UpdateCameraText();
 
@@ -914,27 +901,27 @@ namespace Rogalik_s_3D
         private void NonFacialButton_Click(object sender, EventArgs e)
         {
             graphics.Clear(pictureBox.BackColor);
-            var polyhedron = polyhedrons[0];
 
-            foreach (var poly in polyhedron.polygons)
+            foreach (var polyhedron in polyhedrons)
             {
-                Vector3[] vertex = new Vector3[3];
-                for (int i = 0; i < 3; i++)
-                    vertex[i] = polyhedron.points[poly.indexes[i]];
-                Vector3 vec = new Vector3();
-                vec.X = (vertex[0].X + vertex[1].X + vertex[2].X) / 3 - cameraPosition.X;
-                vec.Y = (vertex[0].Y + vertex[1].Y + vertex[2].Y) / 3 - cameraPosition.Y;
-                vec.Z = (vertex[0].Z + vertex[1].Z + vertex[2].Z) / 3 - cameraPosition.Z;
-
-                var VecView = Normal(vec);
-
-                float scalarProduct = poly.normal.X * VecView.X
-                    + poly.normal.Y * VecView.Y + poly.normal.Z * VecView.Z;
-                if (scalarProduct > 0)
+                foreach (var poly in polyhedron.polygons)
                 {
-                    DrawLine(vertex[0], vertex[1]);
-                    DrawLine(vertex[1], vertex[2]);
-                    DrawLine(vertex[0], vertex[2]);
+                    Vector3[] vertex = new Vector3[3];
+                    for (int i = 0; i < 3; i++)
+                        vertex[i] = polyhedron.points[poly.indexes[i]];
+
+                    var VecView = Normalize(new Vector3(vertex[0].X - cameraPosition.X,
+                        vertex[0].Y - cameraPosition.Y,
+                        vertex[0].Z - cameraPosition.Z));
+
+                    float scalarProduct = poly.normal.X * VecView.X
+                        + poly.normal.Y * VecView.Y + poly.normal.Z * VecView.Z;
+                    if (scalarProduct > 0)
+                    {
+                        DrawLine(vertex[0] + polyhedron.point, vertex[1] + polyhedron.point);
+                        DrawLine(vertex[1] + polyhedron.point, vertex[2] + polyhedron.point);
+                        DrawLine(vertex[0] + polyhedron.point, vertex[2] + polyhedron.point);
+                    }
                 }
             }
 
