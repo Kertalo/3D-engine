@@ -13,6 +13,8 @@ namespace Rogalik_s_3D
         Graphics graphics;
         Pen pen = new Pen(Color.White, 3);
 
+        Random rnd = new Random();
+
         enum State { Position, Rotation, Scale, Draw }
         enum Plane { X, Y, Z, XYZ }
         State state = State.Position;
@@ -86,6 +88,31 @@ namespace Rogalik_s_3D
             polygons[2] = new(new int[] { 1, 2, 3 }, NormolizeVectorCrossProduct(points[1], points[2], points[3]));
             polygons[3] = new(new int[] { 0, 2, 3 }, NormolizeVectorCrossProduct(points[0], points[2], points[3]));
 
+            var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[0].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[1].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[2].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[3].Color = color;
+
+            polygons[0].TextureCoord.Add(new Vector2(0, 0));
+            polygons[0].TextureCoord.Add(new Vector2(1, 0));
+            polygons[0].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[1].TextureCoord.Add(new Vector2(0, 0));
+            polygons[1].TextureCoord.Add(new Vector2(1, 0));
+            polygons[1].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[2].TextureCoord.Add(new Vector2(0, 0));
+            polygons[2].TextureCoord.Add(new Vector2(1, 0));
+            polygons[2].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[3].TextureCoord.Add(new Vector2(0, 0));
+            polygons[3].TextureCoord.Add(new Vector2(1, 0));
+            polygons[3].TextureCoord.Add(new Vector2(1, 1));
+
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
         }
@@ -118,6 +145,68 @@ namespace Rogalik_s_3D
             polygons[10] = new(new int[] { 4, 5, 6 }, NormolizeVectorCrossProduct(points[4], points[5], points[6]));
             polygons[11] = new(new int[] { 4, 6, 7 }, NormolizeVectorCrossProduct(points[4], points[6], points[7]));
 
+            var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[0].Color = color;
+            polygons[1].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[2].Color = color;
+            polygons[3].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[4].Color = color;
+            polygons[5].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[6].Color = color;
+            polygons[7].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[8].Color = color;
+            polygons[9].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[10].Color = color;
+            polygons[11].Color = color;
+
+            polygons[0].TextureCoord.Add(new Vector2(0, 0));
+            polygons[0].TextureCoord.Add(new Vector2(0, 1));
+            polygons[0].TextureCoord.Add(new Vector2(1, 1));
+            polygons[1].TextureCoord.Add(new Vector2(0, 0));
+            polygons[1].TextureCoord.Add(new Vector2(1, 0));
+            polygons[1].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[2].TextureCoord.Add(new Vector2(0, 0));
+            polygons[2].TextureCoord.Add(new Vector2(0, 1));
+            polygons[2].TextureCoord.Add(new Vector2(1, 1));
+            polygons[3].TextureCoord.Add(new Vector2(0, 0));
+            polygons[3].TextureCoord.Add(new Vector2(1, 0));
+            polygons[3].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[4].TextureCoord.Add(new Vector2(0, 0));
+            polygons[4].TextureCoord.Add(new Vector2(0, 1));
+            polygons[4].TextureCoord.Add(new Vector2(1, 1));
+            polygons[5].TextureCoord.Add(new Vector2(0, 0));
+            polygons[5].TextureCoord.Add(new Vector2(1, 0));
+            polygons[5].TextureCoord.Add(new Vector2(1, 1));
+
+
+            polygons[6].TextureCoord.Add(new Vector2(0, 0));
+            polygons[6].TextureCoord.Add(new Vector2(0, 1));
+            polygons[6].TextureCoord.Add(new Vector2(1, 1));
+            polygons[7].TextureCoord.Add(new Vector2(0, 0));
+            polygons[7].TextureCoord.Add(new Vector2(1, 0));
+            polygons[7].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[8].TextureCoord.Add(new Vector2(0, 0));
+            polygons[8].TextureCoord.Add(new Vector2(0, 1));
+            polygons[8].TextureCoord.Add(new Vector2(1, 1));
+            polygons[9].TextureCoord.Add(new Vector2(0, 0));
+            polygons[9].TextureCoord.Add(new Vector2(1, 0));
+            polygons[9].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[10].TextureCoord.Add(new Vector2(0, 0));
+            polygons[10].TextureCoord.Add(new Vector2(0, 1));
+            polygons[10].TextureCoord.Add(new Vector2(1, 1));
+            polygons[11].TextureCoord.Add(new Vector2(0, 0));
+            polygons[11].TextureCoord.Add(new Vector2(1, 0));
+            polygons[11].TextureCoord.Add(new Vector2(1, 1));
+
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
         }
@@ -143,6 +232,56 @@ namespace Rogalik_s_3D
             polygons[5] = new(new int[] { 1, 2, 5 }, NormolizeVectorCrossProduct(points[1], points[2], points[5]));
             polygons[6] = new(new int[] { 2, 3, 5 }, NormolizeVectorCrossProduct(points[2], points[3], points[5]));
             polygons[7] = new(new int[] { 3, 0, 5 }, NormolizeVectorCrossProduct(points[3], points[0], points[5]));
+
+            var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[0].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[1].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[2].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[3].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[4].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[5].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[6].Color = color;
+            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            polygons[7].Color = color;
+
+
+            polygons[0].TextureCoord.Add(new Vector2(0, 0));
+            polygons[0].TextureCoord.Add(new Vector2(0, 1));
+            polygons[0].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[1].TextureCoord.Add(new Vector2(0, 0));
+            polygons[1].TextureCoord.Add(new Vector2(1, 0));
+            polygons[1].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[2].TextureCoord.Add(new Vector2(0, 0));
+            polygons[2].TextureCoord.Add(new Vector2(0, 1));
+            polygons[2].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[3].TextureCoord.Add(new Vector2(0, 0));
+            polygons[3].TextureCoord.Add(new Vector2(1, 0));
+            polygons[3].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[4].TextureCoord.Add(new Vector2(0, 0));
+            polygons[4].TextureCoord.Add(new Vector2(0, 1));
+            polygons[4].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[5].TextureCoord.Add(new Vector2(0, 0));
+            polygons[5].TextureCoord.Add(new Vector2(1, 0));
+            polygons[5].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[6].TextureCoord.Add(new Vector2(0, 0));
+            polygons[6].TextureCoord.Add(new Vector2(0, 1));
+            polygons[6].TextureCoord.Add(new Vector2(1, 1));
+
+            polygons[7].TextureCoord.Add(new Vector2(0, 0));
+            polygons[7].TextureCoord.Add(new Vector2(1, 0));
+            polygons[7].TextureCoord.Add(new Vector2(1, 1));
 
             Polyhedron polyhedron = new(point, points, polygons);
             return polyhedron;
@@ -769,9 +908,7 @@ namespace Rogalik_s_3D
                     p3.Y = (int)(map.Height / 2 - p3.Y * 100 - polyhedron.point.Y * 100);
                     p3.Z = (int)(p3.Z * 100);
 
-                    Random rnd = new Random();
-                    var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
-                    ConvertToRaster(ref p1, ref p2, ref p3, color);
+                    ConvertToRaster(ref p1, ref p2, ref p3, poly.Color);
                 }
             }
 
@@ -930,7 +1067,7 @@ namespace Rogalik_s_3D
 
         private void TextureButton_Click(object sender, EventArgs e)
         {
-            texture = new Bitmap("../../../textures/mem2.png");
+            texture = new Bitmap("../../../textures/box.png");
 
             zBuffer = new float[pictureBox.Width, pictureBox.Height];
             frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
@@ -945,11 +1082,6 @@ namespace Rogalik_s_3D
                     Vector3[] polygonVertex = new Vector3[3];
                     for (int i = 0; i < 3; i++)
                         polygonVertex[i] = polyhedron.points[polygon.indexes[i]];
-
-                    Vector2[] textureVertex = new Vector2[3];
-                    textureVertex[0] = new Vector2(0, 0);
-                    textureVertex[1] = new Vector2(0, 1);
-                    textureVertex[0] = new Vector2(1, 0);
 
                     var p1 = polygonVertex[0];
                     p1.X = (int)(map.Width / 2 + p1.X * 100 + polyhedron.point.X * 100);
@@ -966,8 +1098,8 @@ namespace Rogalik_s_3D
                     p3.Y = (int)(map.Height / 2 - p3.Y * 100 - polyhedron.point.Y * 100);
                     p3.Z = (int)(p3.Z * 100);
 
-                    ConvertToRasterWithTexture(ref p1, ref p2, ref p3, 
-                        textureVertex[0], textureVertex[1], textureVertex[2]);
+                    ConvertToRasterWithTexture(ref p1, ref p2, ref p3,
+                        polygon.TextureCoord[0], polygon.TextureCoord[1], polygon.TextureCoord[2]);
                 }
             }
 
@@ -1108,36 +1240,42 @@ namespace Rogalik_s_3D
                 }
             }
         }
+
+
     }
 }
 
-    public class Polygon
+public class Polygon
+{
+    public int[] indexes;
+    public Vector3 normal;
+    public Color Color;
+    public List<Vector2> TextureCoord;
+
+    public Polygon(int[] indexes)
     {
-        public int[] indexes;
-        public Vector3 normal;
-
-        public Polygon(int[] indexes)
-        {
-            this.indexes = indexes;
-        }
-
-        public Polygon(int[] indexes, Vector3 normal)
-        {
-            this.indexes = indexes;
-            this.normal = normal;
-        }
+        this.indexes = indexes;
+        TextureCoord = new List<Vector2>();
     }
 
-    public class Polyhedron
+    public Polygon(int[] indexes, Vector3 normal)
     {
-        public Vector3 point;
-        public Vector3[] points;
-        public Polygon[] polygons;
-
-        public Polyhedron(Vector3 point, Vector3[] points, Polygon[] polygons)
-        {
-            this.point = point;
-            this.points = points;
-            this.polygons = polygons;
-        }
+        this.indexes = indexes;
+        this.normal = normal;
+        TextureCoord = new List<Vector2>();
     }
+}
+
+public class Polyhedron
+{
+    public Vector3 point;
+    public Vector3[] points;
+    public Polygon[] polygons;
+
+    public Polyhedron(Vector3 point, Vector3[] points, Polygon[] polygons)
+    {
+        this.point = point;
+        this.points = points;
+        this.polygons = polygons;
+    }
+}
