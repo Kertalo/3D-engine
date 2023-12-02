@@ -3,6 +3,7 @@ using System.Globalization;
 using static System.Windows.Forms.AxHost;
 using System.Drawing.Drawing2D;
 using System.Drawing;
+using static System.Windows.Forms.DataFormats;
 
 namespace Rogalik_s_3D
 {
@@ -29,12 +30,15 @@ namespace Rogalik_s_3D
         List<Polyhedron> polyhedrons = new List<Polyhedron>();
         bool isMouseDown = false;
         int indexPolyhedron = 0;
-        bool isPerspective = false;
+        bool isPerspective = true;
 
         private float[,] zBuffer;
         private Color[,] frameBuffer;
 
         private Vector3 LightSourcePosition;
+
+        int[] HorizontalTop;
+        int[] HorizontalDown;
 
         public Form()
         {
@@ -47,6 +51,9 @@ namespace Rogalik_s_3D
             LightSourcePosition = new Vector3(1, 1, 1);
             zBuffer = new float[pictureBox.Width, pictureBox.Height];
             frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
+
+            HorizontalTop = new int[map.Width];
+            HorizontalDown = new int[map.Width];
 
             comboBox.SelectedItem = "XYZ";
             SetCamera(new(0, 0, -10), new(0, 1, 0), new(0.5f, 0, -0.5f));
@@ -1279,8 +1286,8 @@ namespace Rogalik_s_3D
             var v = new Vector3(vertexNorm.X - LightSourcePosition.X,
                                         vertexNorm.Y - LightSourcePosition.Y,
                                         vertexNorm.Z - LightSourcePosition.Z);
-            double cos = (vertexNorm.X * v.X + vertexNorm.Y * v.Y + vertexNorm.Z * v.Z)/
-                        (Math.Sqrt(vertexNorm.X * vertexNorm.X + vertexNorm.Y * vertexNorm.Y + vertexNorm.Z * vertexNorm.Z)*
+            double cos = (vertexNorm.X * v.X + vertexNorm.Y * v.Y + vertexNorm.Z * v.Z) /
+                        (Math.Sqrt(vertexNorm.X * vertexNorm.X + vertexNorm.Y * vertexNorm.Y + vertexNorm.Z * vertexNorm.Z) *
                         Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z));
             var l = Math.Max(cos, 0.0);
             return (l + 1) / 2;
@@ -1409,7 +1416,7 @@ namespace Rogalik_s_3D
             ClearBuffers();
             graphics.Clear(pictureBox.BackColor);
 
-            foreach (Polyhedron polyhedron in polyhedrons) 
+            foreach (Polyhedron polyhedron in polyhedrons)
             {
                 CalculateNormalForVertex(polyhedron);
                 foreach (var polygon in polyhedron.polygons)
@@ -1446,6 +1453,181 @@ namespace Rogalik_s_3D
                     map.SetPixel(i, j, frameBuffer[i, j]);
 
             pictureBox.Image = map;
+        }
+
+        private void initHorizontal()
+        {
+            for (int i = 0; i < map.Width; i++)
+            {
+                HorizontalTop[i] = 0;
+                HorizontalDown[i] = map.Height;
+            }
+        }
+
+        private int isVisible(int x, int y)
+        {
+            if (y < HorizontalTop[x] && y > HorizontalDown[x])
+                return 0;
+            if (y >= HorizontalTop[x])
+                return 1;
+            if (y <= HorizontalDown[x])
+                return -1;
+            return 999;
+        }
+
+        private void Edge(int x, int y, ref int x_edge, ref int y_edge)
+        {
+            if (x_edge != -1)
+                Horizont(x_edge, y_edge, x, y);
+            x_edge = x;
+            y_edge = y;
+        }
+
+        private void Horizont(int x1, int y1, int x2, int y2)
+        {
+            if (x2 - x1 == 0)
+            {
+                HorizontalTop[x2] = Math.Max(HorizontalTop[x2], y2);
+                HorizontalDown[x2] = Math.Min(HorizontalDown[x2], y2);
+            }
+            else
+            {
+                int m = (y2 - y1) / (x2 - x1);
+                for (int x = x1; x <= x2; x++)
+                {
+                    int y = m * (x - x1) + y1;
+                    HorizontalTop[x] = Math.Max(HorizontalTop[x], y);
+                    HorizontalDown[x] = Math.Min(HorizontalDown[x], y);
+                }
+            }
+        }
+
+        private void Intersect(int x1, int y1, int x2, int y2, int[] horizont, ref int x_i, ref int y_i)
+        {
+            if (x2 - x1 == 0)
+            {
+                x_i = x2;
+                y_i = horizont[x2];
+            }
+            else 
+            {
+                int m = (y2 - y1) / (x2 - x1);
+                int y_sign = Math.Sign(y1 + m - horizont[x1 + 1]);
+                int c_sign = y_sign;
+                y_i = y1 + m;
+                x_i = x1 + 1;
+                while (c_sign == y_sign)
+                {
+                    y_i = x_i + m;
+                    x_i++;
+                    c_sign = Math.Sign(y_i - horizont[x_i]);
+                }
+                if (Math.Abs(y_i - m - horizont[x_i - 1]) <= Math.Abs(y_i - horizont[x_i]))
+                {
+                    y_i = y_i - m;
+                    x_i--;
+                }
+            }
+        }
+
+        private int function(int x, int y)
+        {
+            return (1 - x) * (1 - x) + 100 * ((y - x * x) * (y - x * x));
+        }
+
+        private void GraphRasterbutton_Click(object sender, EventArgs e)
+        {
+            int.TryParse(graphX1.Text, out int x1);
+            int.TryParse(graphX2.Text, out int x2);
+            int.TryParse(graphY1.Text, out int y1);
+            int.TryParse(graphY2.Text, out int y2);
+
+            initHorizontal();
+
+            int x_left = x1;
+            int y_left = y1;
+            int x_right = x2;
+            int y_right = y2;
+
+            int x_min = x1;
+            int x_max = x2;
+
+            int z_max = 10;
+            int z_min = -10;
+
+            int x_i = 0;
+            int y_i = 0;
+            for (var z = z_max; z >= z_min; z--)
+            {
+                int x_pr = x_min;
+                int y_pr = function(x_min, z);
+
+                Edge(x_pr, y_pr, ref x_left, ref y_left);
+                int flag1 = isVisible(x_pr, y_pr);
+
+                for (int x = x_min; x <= x_max; x++)
+                {
+                    int y = function(x, z);
+                    int flag2 = isVisible(x_pr, y_pr);
+                    if (flag1 == flag2)
+                    {
+                        graphics.DrawLine(pen, x_pr, y_pr, x, y);
+                        Horizont(x_pr, y_pr, x, y);
+                    }
+                    else if (flag2 == 0)
+                    {
+                        if (flag1 == 1)
+                            Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
+                        else
+                            Intersect(x_pr, y_pr, x, y, HorizontalDown, ref x_i, ref y_i);
+                        graphics.DrawLine(pen, x_pr, y_pr, x, y);
+                        Horizont(x_pr, y_pr, x_i, y_i);
+                    }
+                    else
+                    {
+                        if (flag2 == 1)
+                        {
+                            if (flag1 == 0)
+                            {
+                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
+                                graphics.DrawLine(pen, x_i, y_i, x, y);
+                                Horizont(x_i, y_i, x, y);
+                            }
+                            else
+                            {
+                                Intersect(x_pr, y_pr, x, y, HorizontalDown, ref x_i, ref y_i);
+                                graphics.DrawLine(pen, x_pr, y_pr, x_i, y_i);
+                                Horizont(x_pr, y_pr, x_i, y_i);
+                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
+                                graphics.DrawLine(pen, x_i, y_i, x_pr, y_pr);
+                                Horizont(x_i, y_i, x, y);
+                            }
+                        }
+                        else
+                        {
+                            if (flag1 == 0)
+                            {
+                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
+                                graphics.DrawLine(pen, x_i, y_i, x, y);
+                                Horizont(x_i, y_i, x, y);
+                            }
+                            else
+                            {
+                                Intersect(x_pr, y_pr, x, y, HorizontalDown, ref x_i, ref y_i);
+                                graphics.DrawLine(pen, x_pr, y_pr, x_i, y_i);
+                                Horizont(x_pr, y_pr, x_i, y_i);
+                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
+                                graphics.DrawLine(pen, x_i, y_i, x, y);
+                                Horizont(x_i, y_i, x, y);
+                            }
+                        }
+                    }
+                    flag1 = flag2;
+                    y_pr = y;
+                    x_pr = x;
+                    Edge(x, y, ref x_right, ref y_right);
+                }
+            }
         }
     }
 }

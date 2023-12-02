@@ -73,6 +73,7 @@
             NonFacialButton = new Button();
             TextureButton = new Button();
             GuroButton = new Button();
+            GraphRasterbutton = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -534,12 +535,25 @@
             GuroButton.UseVisualStyleBackColor = true;
             GuroButton.Click += GuroButton_Click;
             // 
+            // GraphRasterbutton
+            // 
+            GraphRasterbutton.BackgroundImage = (Image)resources.GetObject("GraphRasterbutton.BackgroundImage");
+            GraphRasterbutton.BackgroundImageLayout = ImageLayout.Stretch;
+            GraphRasterbutton.FlatStyle = FlatStyle.Flat;
+            GraphRasterbutton.Location = new Point(869, 568);
+            GraphRasterbutton.Name = "GraphRasterbutton";
+            GraphRasterbutton.Size = new Size(32, 32);
+            GraphRasterbutton.TabIndex = 45;
+            GraphRasterbutton.UseVisualStyleBackColor = true;
+            GraphRasterbutton.Click += GraphRasterbutton_Click;
+            // 
             // Form
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.DimGray;
             ClientSize = new Size(1006, 721);
+            Controls.Add(GraphRasterbutton);
             Controls.Add(GuroButton);
             Controls.Add(TextureButton);
             Controls.Add(NonFacialButton);
@@ -621,5 +635,6 @@
         private Button NonFacialButton;
         private Button TextureButton;
         private Button GuroButton;
+        private Button GraphRasterbutton;
     }
 }
