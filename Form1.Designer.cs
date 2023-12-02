@@ -72,6 +72,7 @@
             zBufferButton = new Button();
             NonFacialButton = new Button();
             TextureButton = new Button();
+            GuroButton = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -521,12 +522,25 @@
             TextureButton.UseVisualStyleBackColor = true;
             TextureButton.Click += TextureButton_Click;
             // 
+            // GuroButton
+            // 
+            GuroButton.BackgroundImage = (Image)resources.GetObject("GuroButton.BackgroundImage");
+            GuroButton.BackgroundImageLayout = ImageLayout.Stretch;
+            GuroButton.FlatStyle = FlatStyle.Flat;
+            GuroButton.Location = new Point(815, 608);
+            GuroButton.Name = "GuroButton";
+            GuroButton.Size = new Size(32, 32);
+            GuroButton.TabIndex = 44;
+            GuroButton.UseVisualStyleBackColor = true;
+            GuroButton.Click += GuroButton_Click;
+            // 
             // Form
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.DimGray;
             ClientSize = new Size(1006, 721);
+            Controls.Add(GuroButton);
             Controls.Add(TextureButton);
             Controls.Add(NonFacialButton);
             Controls.Add(zBufferButton);
@@ -606,5 +620,6 @@
         private TextBox rX;
         private Button NonFacialButton;
         private Button TextureButton;
+        private Button GuroButton;
     }
 }

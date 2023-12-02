@@ -34,12 +34,17 @@ namespace Rogalik_s_3D
         private float[,] zBuffer;
         private Color[,] frameBuffer;
 
+        private Vector3 LightSourcePosition;
+
         public Form()
         {
             InitializeComponent();
             map = new Bitmap(pictureBox.Width, pictureBox.Height);
             graphics = Graphics.FromImage(map);
 
+            texture = new Bitmap(map);
+
+            LightSourcePosition = new Vector3(1, 1, 1);
             zBuffer = new float[pictureBox.Width, pictureBox.Height];
             frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
 
@@ -84,9 +89,9 @@ namespace Rogalik_s_3D
 
             Polygon[] polygons = new Polygon[4];
             polygons[0] = new(new int[] { 0, 1, 2 }, NormolizeVectorCrossProduct(points[0], points[1], points[2]));
-            polygons[1] = new(new int[] { 0, 1, 3 }, NormolizeVectorCrossProduct(points[0], points[1], points[3]));
+            polygons[1] = new(new int[] { 0, 3, 1 }, NormolizeVectorCrossProduct(points[0], points[3], points[1]));
             polygons[2] = new(new int[] { 1, 2, 3 }, NormolizeVectorCrossProduct(points[1], points[2], points[3]));
-            polygons[3] = new(new int[] { 0, 2, 3 }, NormolizeVectorCrossProduct(points[0], points[2], points[3]));
+            polygons[3] = new(new int[] { 0, 3, 2 }, NormolizeVectorCrossProduct(points[0], points[3], points[2]));
 
             var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
             polygons[0].Color = color;
@@ -134,7 +139,7 @@ namespace Rogalik_s_3D
             Polygon[] polygons = new Polygon[12];
             polygons[0] = new(new int[] { 0, 1, 2 }, NormolizeVectorCrossProduct(points[0], points[1], points[2]));
             polygons[1] = new(new int[] { 0, 2, 3 }, NormolizeVectorCrossProduct(points[0], points[2], points[3]));
-            polygons[2] = new(new int[] { 0, 1, 5,}, NormolizeVectorCrossProduct(points[0], points[1], points[5]));
+            polygons[2] = new(new int[] { 0, 1, 5, }, NormolizeVectorCrossProduct(points[0], points[1], points[5]));
             polygons[3] = new(new int[] { 0, 5, 4 }, NormolizeVectorCrossProduct(points[0], points[5], points[4]));
             polygons[4] = new(new int[] { 0, 3, 7 }, NormolizeVectorCrossProduct(points[0], points[3], points[7]));
             polygons[5] = new(new int[] { 0, 7, 4 }, NormolizeVectorCrossProduct(points[0], points[7], points[4]));
@@ -1048,8 +1053,8 @@ namespace Rogalik_s_3D
                         vertex[i] = polyhedron.points[poly.indexes[i]];
 
                     var VecView = Normalize(new Vector3(vertex[0].X - cameraPosition.X,
-                        vertex[0].Y - cameraPosition.Y,
-                        vertex[0].Z - cameraPosition.Z));
+                                                vertex[0].Y - cameraPosition.Y,
+                                                vertex[0].Z - cameraPosition.Z));
 
                     float scalarProduct = poly.normal.X * VecView.X
                         + poly.normal.Y * VecView.Y + poly.normal.Z * VecView.Z;
@@ -1075,7 +1080,7 @@ namespace Rogalik_s_3D
             ClearBuffers();
             graphics.Clear(pictureBox.BackColor);
 
-            foreach (Polyhedron polyhedron in polyhedrons) 
+            foreach (Polyhedron polyhedron in polyhedrons)
             {
                 foreach (Polygon polygon in polyhedron.polygons)
                 {
@@ -1140,7 +1145,7 @@ namespace Rogalik_s_3D
             }
         }
 
-        private void ConvertToRasterWithTexture(ref Vector3 p0, ref Vector3 p1, ref Vector3 p2, 
+        private void ConvertToRasterWithTexture(ref Vector3 p0, ref Vector3 p1, ref Vector3 p2,
             Vector2 tp0, Vector2 tp1, Vector2 tp2)
         {
             if (p1.Y < p0.Y)
@@ -1198,8 +1203,8 @@ namespace Rogalik_s_3D
             List<int> z_left;
             List<int> z_right;
 
-            List<Vector2> lefttexture = new List<Vector2>();
-            List<Vector2> righttexture = new List<Vector2>();
+            List<Vector2> lefttexture;
+            List<Vector2> righttexture;
 
             if (x02[m] < x012[m])
             {
@@ -1241,7 +1246,207 @@ namespace Rogalik_s_3D
             }
         }
 
+        private Vector3 NormalVertex(List<Polygon> polygons, Polyhedron polyhedron)
+        {
+            Vector3 res = new Vector3(0, 0, 0);
+            foreach (var poly in polygons)
+            {
+                res.X += poly.normal.X;
+                res.Y += poly.normal.Y;
+                res.Z += poly.normal.Z;
+            }
+            res.X = res.X / polygons.Count();
+            res.Y = res.Y / polygons.Count();
+            res.Z = res.Z / polygons.Count();
+            return res;
+        }
 
+        public void CalculateNormalForVertex(Polyhedron polyhedron)
+        {
+            foreach (var polygon in polyhedron.polygons)
+            {
+                Vector3[] vertex = new Vector3[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    List<Polygon> polygons = polyhedron.polygons.Where(x => x.indexes.Contains(polygon.indexes[i])).ToList();
+                    polygon.ListVertexNormal.Add(NormalVertex(polygons, polyhedron));
+                }
+            }
+        }
+
+        public double Lambert(Vector3 vertexNorm)
+        {
+            var v = new Vector3(vertexNorm.X - LightSourcePosition.X,
+                                        vertexNorm.Y - LightSourcePosition.Y,
+                                        vertexNorm.Z - LightSourcePosition.Z);
+            double cos = (vertexNorm.X * v.X + vertexNorm.Y * v.Y + vertexNorm.Z * v.Z)/
+                        (Math.Sqrt(vertexNorm.X * vertexNorm.X + vertexNorm.Y * vertexNorm.Y + vertexNorm.Z * vertexNorm.Z)*
+                        Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z));
+            var l = Math.Max(cos, 0.0);
+            return (l + 1) / 2;
+        }
+
+        private List<double> InterpolateLight(int x1, double y1, int x2, double y2)
+        {
+            List<double> res = new List<double>();
+            if (x1 == x2)
+            {
+                res.Add(y2);
+            }
+            double step = (y2 - y1) / (x2 - x1);
+            double y = y1;
+            for (int i = x1; i <= x2; i++)
+            {
+                res.Add(y);
+                y += step;
+            }
+            return res;
+        }
+
+        private void ConvertToRasterGuro(ref Vector3 p0, ref Vector3 p1, ref Vector3 p2, Color color,
+            double l0, double l1, double l2)
+        {
+            if (p1.Y < p0.Y)
+            {
+                var temp = p0;
+                p0 = p1;
+                p1 = temp;
+            }
+
+            if (p2.Y < p0.Y)
+            {
+                var temp = p0;
+                p0 = p2;
+                p2 = temp;
+            }
+
+            if (p2.Y < p1.Y)
+            {
+                var temp = p2;
+                p2 = p1;
+                p1 = temp;
+            }
+
+            var x01 = Interpolate((int)p0.Y, (int)p0.X, (int)p1.Y, (int)p1.X);
+            var x12 = Interpolate((int)p1.Y, (int)p1.X, (int)p2.Y, (int)p2.X);
+            var x02 = Interpolate((int)p0.Y, (int)p0.X, (int)p2.Y, (int)p2.X);
+
+            var z01 = Interpolate((int)p0.Y, (int)p0.Z, (int)p1.Y, (int)p1.Z);
+            var z12 = Interpolate((int)p1.Y, (int)p1.Z, (int)p2.Y, (int)p2.Z);
+            var z02 = Interpolate((int)p0.Y, (int)p0.Z, (int)p2.Y, (int)p2.Z);
+
+            var l01 = InterpolateLight((int)p0.Y, l0, (int)p1.Y, l1);
+            var l12 = InterpolateLight((int)p1.Y, l1, (int)p2.Y, l2);
+            var l02 = InterpolateLight((int)p0.Y, l0, (int)p2.Y, l2);
+
+            x01.Remove(x01.Last());
+            List<int> x012 = new List<int>();
+            x012.AddRange(x01);
+            x012.AddRange(x12);
+
+            z01.Remove(z01.Last());
+            List<int> z012 = new List<int>();
+            z012.AddRange(z01);
+            z012.AddRange(z12);
+
+            l01.Remove(l01.Last());
+            List<double> l012 = new List<double>();
+            l012.AddRange(l01);
+            l012.AddRange(l12);
+
+            var m = x012.Count / 2;
+            List<int> x_left;
+            List<int> x_right;
+            List<int> z_left;
+            List<int> z_right;
+            List<double> l_left;
+            List<double> l_right;
+            if (x02[m] < x012[m])
+            {
+                x_left = x02;
+                x_right = x012;
+
+                z_left = z02;
+                z_right = z012;
+
+                l_left = l02;
+                l_right = l012;
+            }
+            else
+            {
+                x_left = x012;
+                x_right = x02;
+
+                z_left = z012;
+                z_right = z02;
+
+                l_left = l012;
+                l_right = l02;
+            }
+
+            for (int y = (int)p0.Y; y < (int)p2.Y - 1; y++)
+            {
+                int x_l = x_left[(int)(y - p0.Y)];
+                int x_r = x_right[(int)(y - p0.Y)];
+
+                var z_segment = Interpolate(x_l, z_left[(int)(y - p0.Y)], x_r, z_right[(int)(y - p0.Y)]);
+                List<double> light_segment = InterpolateLight(x_l, l_left[(int)(y - p0.Y)], x_r, l_right[(int)(y - p0.Y)]);
+                for (int x = x_l; x < x_r; x++)
+                {
+                    float depth = z_segment[x - x_l];
+                    double light = light_segment[x - x_l];
+
+                    ApplyZBufferAlgorithm(x, y, depth, Color.FromArgb((int)(light * color.R), (int)(light * color.G), (int)(light * color.B)));
+                }
+            }
+        }
+
+        private void GuroButton_Click(object sender, EventArgs e)
+        {
+            zBuffer = new float[pictureBox.Width, pictureBox.Height];
+            frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
+
+            ClearBuffers();
+            graphics.Clear(pictureBox.BackColor);
+
+            foreach (Polyhedron polyhedron in polyhedrons) 
+            {
+                CalculateNormalForVertex(polyhedron);
+                foreach (var polygon in polyhedron.polygons)
+                {
+                    foreach (var vert in polygon.ListVertexNormal)
+                        polygon.lightness.Add(Lambert(vert));
+
+                    Vector3[] vertex = new Vector3[3];
+                    for (int i = 0; i < 3; i++)
+                        vertex[i] = polyhedron.points[polygon.indexes[i]];
+
+                    var p1 = vertex[0];
+                    p1.X = (int)(map.Width / 2 + p1.X * 100 + polyhedron.point.X * 100);
+                    p1.Y = (int)(map.Height / 2 - p1.Y * 100 - polyhedron.point.Y * 100);
+                    p1.Z = (int)(p1.Z * 100);
+
+                    var p2 = vertex[1];
+                    p2.X = (int)(map.Width / 2 + p2.X * 100 + polyhedron.point.X * 100);
+                    p2.Y = (int)(map.Height / 2 - p2.Y * 100) - polyhedron.point.Y * 100;
+                    p2.Z = (int)(p2.Z * 100);
+
+                    var p3 = vertex[2];
+                    p3.X = (int)(map.Width / 2 + p3.X * 100 + polyhedron.point.X * 100);
+                    p3.Y = (int)(map.Height / 2 - p3.Y * 100 - polyhedron.point.Y * 100);
+                    p3.Z = (int)(p3.Z * 100);
+
+                    ConvertToRasterGuro(ref p1, ref p2, ref p3, polygon.Color,
+                        polygon.lightness[0], polygon.lightness[1], polygon.lightness[2]);
+                }
+            }
+
+            for (int i = 0; i < pictureBox.Width; i++)
+                for (int j = 0; j < pictureBox.Height; j++)
+                    map.SetPixel(i, j, frameBuffer[i, j]);
+
+            pictureBox.Image = map;
+        }
     }
 }
 
@@ -1251,11 +1456,15 @@ public class Polygon
     public Vector3 normal;
     public Color Color;
     public List<Vector2> TextureCoord;
+    public List<Vector3> ListVertexNormal;
+    public List<double> lightness;
 
     public Polygon(int[] indexes)
     {
         this.indexes = indexes;
         TextureCoord = new List<Vector2>();
+        ListVertexNormal = new List<Vector3>();
+        lightness = new List<double>();
     }
 
     public Polygon(int[] indexes, Vector3 normal)
@@ -1263,6 +1472,8 @@ public class Polygon
         this.indexes = indexes;
         this.normal = normal;
         TextureCoord = new List<Vector2>();
+        ListVertexNormal = new List<Vector3>();
+        lightness = new List<double>();
     }
 }
 
