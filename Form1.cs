@@ -301,8 +301,7 @@ namespace Rogalik_s_3D
 
         private Vector3 Equation(float x, float y)
         {
-            double r = x * x + y * y;
-            return new(x, y, (float)(Math.Cos(r) / (r + 1)));
+            return new(x, y, (float)(x*x + y*y + 1));
         }
 
         private Polyhedron Graph(Vector3 point, float x1, float x2, float y1, float y2, int split)
@@ -1455,179 +1454,151 @@ namespace Rogalik_s_3D
             pictureBox.Image = map;
         }
 
-        private void initHorizontal()
+        private int Visibility(Vector3 point, ref double[] upHorizon, ref double[] downHorizon)
         {
-            for (int i = 0; i < map.Width; i++)
-            {
-                HorizontalTop[i] = 0;
-                HorizontalDown[i] = map.Height;
-            }
-        }
-
-        private int isVisible(int x, int y)
-        {
-            if (y < HorizontalTop[x] && y > HorizontalDown[x])
+            if (point.X < 0 || point.X > map.Width)
                 return 0;
-            if (y >= HorizontalTop[x])
+            if (point.Y >= upHorizon[(int)point.X])              
                 return 1;
-            if (y <= HorizontalDown[x])
+
+            if (point.Y <= downHorizon[(int)point.X])
                 return -1;
-            return 999;
+
+            return 0;
         }
 
-        private void Edge(int x, int y, ref int x_edge, ref int y_edge)
+        void updateHorizons(Vector3 last, Vector3 curr, ref double[] upHorizon, ref double[] downHorizon)
         {
-            if (x_edge != -1)
-                Horizont(x_edge, y_edge, x, y);
-            x_edge = x;
-            y_edge = y;
-        }
-
-        private void Horizont(int x1, int y1, int x2, int y2)
-        {
-            if (x2 - x1 == 0)
+            if (last.X < 0 || curr.X >= map.Width)
             {
-                HorizontalTop[x2] = Math.Max(HorizontalTop[x2], y2);
-                HorizontalDown[x2] = Math.Min(HorizontalDown[x2], y2);
+                return;
+            }
+            if (curr.X - last.X == 0)
+            {
+                upHorizon[(int)curr.X] = Math.Max(upHorizon[(int)curr.X], curr.Y);
+                downHorizon[(int)curr.X] = Math.Min(downHorizon[(int)curr.X], curr.Y);
             }
             else
             {
-                int m = (y2 - y1) / (x2 - x1);
-                for (int x = x1; x <= x2; x++)
+                var tg = (curr.Y - last.Y) / (curr.X - last.X);
+                for (int x = (int)last.X; x <= curr.X; x++)
                 {
-                    int y = m * (x - x1) + y1;
-                    HorizontalTop[x] = Math.Max(HorizontalTop[x], y);
-                    HorizontalDown[x] = Math.Min(HorizontalDown[x], y);
+                    var y = tg * (x - last.X) + last.Y;
+                    upHorizon[x] = Math.Max(upHorizon[x], y);
+                    downHorizon[x] = Math.Min(downHorizon[x], y);
                 }
             }
         }
 
-        private void Intersect(int x1, int y1, int x2, int y2, int[] horizont, ref int x_i, ref int y_i)
+        Vector3 intersect(Vector3 previous, Vector3 curr, ref double[] upHorizon, ref double[] downHorizon)
         {
-            if (x2 - x1 == 0)
+            double xStep = (curr.X - previous.X * 1.0) / 20;
+            double yStep = (curr.Y - previous.Y * 1.0) / 20;
+            for (int i = 1; i <= 20; i++)
             {
-                x_i = x2;
-                y_i = horizont[x2];
-            }
-            else 
-            {
-                int m = (y2 - y1) / (x2 - x1);
-                int y_sign = Math.Sign(y1 + m - horizont[x1 + 1]);
-                int c_sign = y_sign;
-                y_i = y1 + m;
-                x_i = x1 + 1;
-                while (c_sign == y_sign)
+                var point = new Vector3((float)Math.Clamp(previous.X + i * xStep, 0, map.Width - 1), (float)(previous.Y + i * yStep), curr.Z);
+                if (Visibility(point, ref upHorizon, ref downHorizon) == 0)
                 {
-                    y_i = x_i + m;
-                    x_i++;
-                    c_sign = Math.Sign(y_i - horizont[x_i]);
-                }
-                if (Math.Abs(y_i - m - horizont[x_i - 1]) <= Math.Abs(y_i - horizont[x_i]))
-                {
-                    y_i = y_i - m;
-                    x_i--;
+                    return point;
                 }
             }
+
+            return curr;
         }
 
-        private int function(int x, int y)
+        private void DrawLineV(Vector3 p1, Vector3 p2)
         {
-            return (1 - x) * (1 - x) + 100 * ((y - x * x) * (y - x * x));
+            graphics.DrawLine(pen, new PointF(p1.X, p1.Y + 300),
+                new PointF(p2.X, p2.Y + 300));
+        }
+
+        private double function(double x, double y)
+        {
+            return Math.Sqrt(x*x + y*y + 1);
         }
 
         private void GraphRasterbutton_Click(object sender, EventArgs e)
         {
-            int.TryParse(graphX1.Text, out int x1);
-            int.TryParse(graphX2.Text, out int x2);
-            int.TryParse(graphY1.Text, out int y1);
-            int.TryParse(graphY2.Text, out int y2);
+            graphics.Clear(pictureBox.BackColor);
 
-            initHorizontal();
+            double threshold = 5;
+            double splitting = 50;
 
-            int x_left = x1;
-            int y_left = y1;
-            int x_right = x2;
-            int y_right = y2;
+            double step = threshold * 2.0 / splitting;
 
-            int x_min = x1;
-            int x_max = x2;
+            var upHorizon = new double[map.Width];
+            var downHorizon = new double[map.Width];
 
-            int z_max = 10;
-            int z_min = -10;
-
-            int x_i = 0;
-            int y_i = 0;
-            for (var z = z_max; z >= z_min; z--)
+            for (int i = 0; i < map.Width; i++)
             {
-                int x_pr = x_min;
-                int y_pr = function(x_min, z);
+                upHorizon[i] = double.MinValue;
+                downHorizon[i] = double.MaxValue;
+            }
 
-                Edge(x_pr, y_pr, ref x_left, ref y_left);
-                int flag1 = isVisible(x_pr, y_pr);
-
-                for (int x = x_min; x <= x_max; x++)
+            for (double z = threshold; z >= -threshold; z -= step)
+            {
+                Vector3 previous = new Vector3();
+                previous.X = (int)(map.Width / 2 + (-threshold) * 100);
+                previous.Y = (int)(map.Height / 2 - function(-threshold, z) * 100);
+                previous.Z = (int)(z * 100);
+                for (double x = -threshold; x <= threshold; x += step)
                 {
-                    int y = function(x, z);
-                    int flag2 = isVisible(x_pr, y_pr);
-                    if (flag1 == flag2)
+                    Vector3 current = new Vector3();
+                    current.X = (int)(map.Width / 2 + x * 100);
+                    current.Y = (int)(map.Height / 2 - function(x, z) * 100);
+                    current.Z = (int)(z * 100);
+
+                    if (Visibility(current, ref upHorizon, ref downHorizon) == 1)
                     {
-                        graphics.DrawLine(pen, x_pr, y_pr, x, y);
-                        Horizont(x_pr, y_pr, x, y);
-                    }
-                    else if (flag2 == 0)
-                    {
-                        if (flag1 == 1)
-                            Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
+                        if (Visibility(previous, ref upHorizon, ref downHorizon) != 0)
+                        {
+                            DrawLineV(previous, current);
+                            updateHorizons(previous, current, ref upHorizon, ref downHorizon);
+                        }
                         else
-                            Intersect(x_pr, y_pr, x, y, HorizontalDown, ref x_i, ref y_i);
-                        graphics.DrawLine(pen, x_pr, y_pr, x, y);
-                        Horizont(x_pr, y_pr, x_i, y_i);
+                        {
+                            var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
+                            DrawLine(current, mid);
+                            updateHorizons(current, mid, ref upHorizon, ref downHorizon);
+                        }
+
+                    }
+                    else if (Visibility(current, ref upHorizon, ref downHorizon) == -1)
+                    {
+                        if (Visibility(previous, ref upHorizon, ref downHorizon) == 0)
+                        {
+                            DrawLine(previous, current);
+                            updateHorizons(previous, current, ref upHorizon, ref downHorizon);
+                        }
+                        else
+                        {
+                            var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
+                            DrawLine(current, mid);
+                            updateHorizons(current, mid, ref upHorizon, ref downHorizon);
+                        }
+
                     }
                     else
                     {
-                        if (flag2 == 1)
+                        if (Visibility(previous, ref upHorizon, ref downHorizon) == 1)
                         {
-                            if (flag1 == 0)
-                            {
-                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
-                                graphics.DrawLine(pen, x_i, y_i, x, y);
-                                Horizont(x_i, y_i, x, y);
-                            }
-                            else
-                            {
-                                Intersect(x_pr, y_pr, x, y, HorizontalDown, ref x_i, ref y_i);
-                                graphics.DrawLine(pen, x_pr, y_pr, x_i, y_i);
-                                Horizont(x_pr, y_pr, x_i, y_i);
-                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
-                                graphics.DrawLine(pen, x_i, y_i, x_pr, y_pr);
-                                Horizont(x_i, y_i, x, y);
-                            }
+                            var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
+                            DrawLine(previous, mid);
+                            updateHorizons(previous, mid, ref upHorizon, ref downHorizon);
                         }
-                        else
+                        else if (Visibility(previous, ref upHorizon, ref downHorizon) == -1)
                         {
-                            if (flag1 == 0)
-                            {
-                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
-                                graphics.DrawLine(pen, x_i, y_i, x, y);
-                                Horizont(x_i, y_i, x, y);
-                            }
-                            else
-                            {
-                                Intersect(x_pr, y_pr, x, y, HorizontalDown, ref x_i, ref y_i);
-                                graphics.DrawLine(pen, x_pr, y_pr, x_i, y_i);
-                                Horizont(x_pr, y_pr, x_i, y_i);
-                                Intersect(x_pr, y_pr, x, y, HorizontalTop, ref x_i, ref y_i);
-                                graphics.DrawLine(pen, x_i, y_i, x, y);
-                                Horizont(x_i, y_i, x, y);
-                            }
+                            var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
+                            DrawLine(previous, mid);
+                            updateHorizons(previous, mid, ref upHorizon, ref downHorizon);
                         }
                     }
-                    flag1 = flag2;
-                    y_pr = y;
-                    x_pr = x;
-                    Edge(x, y, ref x_right, ref y_right);
+
+                    previous = current;
                 }
             }
+
+            pictureBox.Image = map;
         }
     }
 }
