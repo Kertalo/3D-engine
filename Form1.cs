@@ -48,7 +48,7 @@ namespace Rogalik_s_3D
 
             texture = new Bitmap(map);
 
-            LightSourcePosition = new Vector3(1, 1, 1);
+            LightSourcePosition = new Vector3(0, -10, 0);
             zBuffer = new float[pictureBox.Width, pictureBox.Height];
             frameBuffer = new Color[pictureBox.Width, pictureBox.Height];
 
@@ -102,11 +102,11 @@ namespace Rogalik_s_3D
 
             var color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
             polygons[0].Color = color;
-            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            //color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
             polygons[1].Color = color;
-            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            //color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
             polygons[2].Color = color;
-            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            //color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
             polygons[3].Color = color;
 
             polygons[0].TextureCoord.Add(new Vector2(0, 0));
@@ -146,8 +146,8 @@ namespace Rogalik_s_3D
             Polygon[] polygons = new Polygon[12];
             polygons[0] = new(new int[] { 0, 1, 2 }, NormolizeVectorCrossProduct(points[0], points[1], points[2]));
             polygons[1] = new(new int[] { 0, 2, 3 }, NormolizeVectorCrossProduct(points[0], points[2], points[3]));
-            polygons[2] = new(new int[] { 0, 1, 5, }, NormolizeVectorCrossProduct(points[0], points[1], points[5]));
-            polygons[3] = new(new int[] { 0, 5, 4 }, NormolizeVectorCrossProduct(points[0], points[5], points[4]));
+            polygons[2] = new(new int[] { 0, 5, 1 }, NormolizeVectorCrossProduct(points[0], points[5], points[1]));
+            polygons[3] = new(new int[] { 0, 4, 5 }, NormolizeVectorCrossProduct(points[0], points[4], points[5]));
             polygons[4] = new(new int[] { 0, 3, 7 }, NormolizeVectorCrossProduct(points[0], points[3], points[7]));
             polygons[5] = new(new int[] { 0, 7, 4 }, NormolizeVectorCrossProduct(points[0], points[7], points[4]));
             polygons[6] = new(new int[] { 1, 2, 6 }, NormolizeVectorCrossProduct(points[1], points[2], points[6]));
@@ -169,7 +169,7 @@ namespace Rogalik_s_3D
             color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
             polygons[6].Color = color;
             polygons[7].Color = color;
-            color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
+            //color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
             polygons[8].Color = color;
             polygons[9].Color = color;
             color = Color.FromArgb(rnd.Next(256), rnd.Next(256), rnd.Next(256));
@@ -501,6 +501,33 @@ namespace Rogalik_s_3D
                     DrawLine(polyhedron.points[polyhedron.polygons[i].indexes[polyhedron.polygons[i].indexes.Length - 1]] + polyhedron.point - cameraPosition,
                             polyhedron.points[polyhedron.polygons[i].indexes[0]] + polyhedron.point - cameraPosition);
                 }
+
+            pictureBox.Image = map;
+        }
+
+        void PerspectiveProjectionPointsTrans(ref Vector3[] points)
+        {
+            float[,] matrix = new float[4, 4];
+            matrix[0, 0] = 1;
+            matrix[1, 1] = 1;
+            matrix[3, 3] = 1;
+
+            for (int j = 0; j < points.Length; j++)
+            {
+                matrix[2, 3] = -1 / (points[j].Z - cameraPosition.Z);
+                float[] newPoint = Multiplication(points[j], matrix);
+                points[j] = new Vector3(newPoint[0] / newPoint[3], newPoint[1] / newPoint[3], newPoint[2])
+                    - cameraPosition;
+            }
+        }
+
+        void PerspectiveProjectionPoints(Vector3[] points)
+        {
+            PerspectiveProjectionPointsTrans(ref points);
+
+            DrawLine(points[0],points[1]);
+            DrawLine(points[2], points[1]);
+            DrawLine(points[0], points[2]);
 
             pictureBox.Image = map;
         }
@@ -888,6 +915,7 @@ namespace Rogalik_s_3D
             }
         }
 
+        // ----- Z-Buffer - ˝ÚÓ ÚÓÎ¸ÍÓ Ì‡˜‡ÎÓ, ÔÓÍ‡ ÎÂ„ÍÓ Ë ÔÓÒÚÓ ----- //
         private void zBufferButton_Click(object sender, EventArgs e)
         {
             zBuffer = new float[pictureBox.Width, pictureBox.Height];
@@ -904,17 +932,21 @@ namespace Rogalik_s_3D
                     for (int i = 0; i < 3; i++)
                         vertex[i] = polyhedron.points[poly.indexes[i]];
 
-                    var p1 = vertex[0];
+
+                    var p = new Vector3[3] { vertex[0], vertex[1], vertex[2] };
+                    PerspectiveProjectionPointsTrans(ref p);
+
+                    var p1 = p[0];
                     p1.X = (int)(map.Width / 2 + p1.X * 100 + polyhedron.point.X * 100);
                     p1.Y = (int)(map.Height / 2 - p1.Y * 100 - polyhedron.point.Y * 100);
                     p1.Z = (int)(p1.Z * 100);
 
-                    var p2 = vertex[1];
+                    var p2 = p[1];
                     p2.X = (int)(map.Width / 2 + p2.X * 100 + polyhedron.point.X * 100);
                     p2.Y = (int)(map.Height / 2 - p2.Y * 100) - polyhedron.point.Y * 100;
                     p2.Z = (int)(p2.Z * 100);
 
-                    var p3 = vertex[2];
+                    var p3 = p[2];
                     p3.X = (int)(map.Width / 2 + p3.X * 100 + polyhedron.point.X * 100);
                     p3.Y = (int)(map.Height / 2 - p3.Y * 100 - polyhedron.point.Y * 100);
                     p3.Z = (int)(p3.Z * 100);
@@ -1046,6 +1078,7 @@ namespace Rogalik_s_3D
             }
         }
 
+        // ----- ”‰‡ÎÂÌËÂ ÌÂ‚Ë‰ËÏ˚ı „‡ÌÂÈ œ–¿¬»À‹ÕŒ –¿—“¿¬‹ ¬≈–ÿ»Õ€ ¬ “–≈”√ŒÀ‹Õ» ¿’ »À» —Ã≈–“‹, Ë ÌÂ Á‡·Û‰¸ Ó·ÌÓ‚ÎˇÚ¸ ÌÓÏ‡ÎË----- //
         private void NonFacialButton_Click(object sender, EventArgs e)
         {
             graphics.Clear(pictureBox.BackColor);
@@ -1057,18 +1090,23 @@ namespace Rogalik_s_3D
                     Vector3[] vertex = new Vector3[3];
                     for (int i = 0; i < 3; i++)
                         vertex[i] = polyhedron.points[poly.indexes[i]];
+                    poly.normal = NormolizeVectorCrossProduct(vertex[0], vertex[1], vertex[2]);
 
-                    var VecView = Normalize(new Vector3(vertex[0].X - cameraPosition.X,
-                                                vertex[0].Y - cameraPosition.Y,
-                                                vertex[0].Z - cameraPosition.Z));
+                    var v = new Vector3();
+                    v.X = (vertex[0].X + vertex[1].X + vertex[2].X) / 3;
+                    v.Y = (vertex[0].Y + vertex[1].Y + vertex[2].Y) / 3;
+                    v.Z = (vertex[0].Z + vertex[1].Z + vertex[2].Z) / 3;
+
+                    var VecView = Normalize(new Vector3(cameraPosition.X - v.X,
+                                                cameraPosition.Y - v.Y,
+                                                cameraPosition.Z - v.Y));
 
                     float scalarProduct = poly.normal.X * VecView.X
                         + poly.normal.Y * VecView.Y + poly.normal.Z * VecView.Z;
                     if (scalarProduct > 0)
                     {
-                        DrawLine(vertex[0] + polyhedron.point, vertex[1] + polyhedron.point);
-                        DrawLine(vertex[1] + polyhedron.point, vertex[2] + polyhedron.point);
-                        DrawLine(vertex[0] + polyhedron.point, vertex[2] + polyhedron.point);
+                        PerspectiveProjectionPoints(new Vector3[] {
+                        vertex[0] + polyhedron.point, vertex[1] + polyhedron.point, vertex[2] + polyhedron.point});
                     }
                 }
             }
@@ -1076,6 +1114,7 @@ namespace Rogalik_s_3D
             pictureBox.Image = map;
         }
 
+        // ----- ¿ ÚÛÚ Û Ì‡Ò “ÂÍÒÚÛ‡ ----- //
         private void TextureButton_Click(object sender, EventArgs e)
         {
             texture = new Bitmap("../../../textures/box.png");
@@ -1252,7 +1291,8 @@ namespace Rogalik_s_3D
             }
         }
 
-        private Vector3 NormalVertex(List<Polygon> polygons, Polyhedron polyhedron)
+        // ----- ƒ‡Î¸¯Â Ë‰ÂÚ √”–Œ ----- //
+        private Vector3 NormalVertex(List<Polygon> polygons)
         {
             Vector3 res = new Vector3(0, 0, 0);
             foreach (var poly in polygons)
@@ -1264,7 +1304,7 @@ namespace Rogalik_s_3D
             res.X = res.X / polygons.Count();
             res.Y = res.Y / polygons.Count();
             res.Z = res.Z / polygons.Count();
-            return res;
+            return Vector3.Normalize(res);
         }
 
         public void CalculateNormalForVertex(Polyhedron polyhedron)
@@ -1275,21 +1315,22 @@ namespace Rogalik_s_3D
                 for (int i = 0; i < 3; i++)
                 {
                     List<Polygon> polygons = polyhedron.polygons.Where(x => x.indexes.Contains(polygon.indexes[i])).ToList();
-                    polygon.ListVertexNormal.Add(NormalVertex(polygons, polyhedron));
+                    polygon.ListVertexNormal.Add(NormalVertex(polygons));
                 }
             }
         }
 
         public double Lambert(Vector3 vertexNorm)
         {
-            var v = new Vector3(vertexNorm.X - LightSourcePosition.X,
-                                        vertexNorm.Y - LightSourcePosition.Y,
-                                        vertexNorm.Z - LightSourcePosition.Z);
-            double cos = (vertexNorm.X * v.X + vertexNorm.Y * v.Y + vertexNorm.Z * v.Z) /
-                        (Math.Sqrt(vertexNorm.X * vertexNorm.X + vertexNorm.Y * vertexNorm.Y + vertexNorm.Z * vertexNorm.Z) *
-                        Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z));
-            var l = Math.Max(cos, 0.0);
-            return (l + 1) / 2;
+            var v = Normalize(new Vector3(LightSourcePosition.X - vertexNorm.X,
+                                        LightSourcePosition.Y - vertexNorm.Y,
+                                        LightSourcePosition.Z - vertexNorm.Z));
+            double l1 = Math.Sqrt(vertexNorm.X * vertexNorm.X + vertexNorm.Y * vertexNorm.Y + vertexNorm.Z * vertexNorm.Z);
+            double l2 = Math.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
+            double s = (vertexNorm.X * v.X + vertexNorm.Y * v.Y + vertexNorm.Z * v.Z);
+            double a = (s / (l1 * l2));
+            var l = Math.Max(a, 0.0);
+            return l*0.9;
         }
 
         private List<double> InterpolateLight(int x1, double y1, int x2, double y2)
@@ -1417,15 +1458,27 @@ namespace Rogalik_s_3D
 
             foreach (Polyhedron polyhedron in polyhedrons)
             {
-                CalculateNormalForVertex(polyhedron);
                 foreach (var polygon in polyhedron.polygons)
                 {
-                    foreach (var vert in polygon.ListVertexNormal)
-                        polygon.lightness.Add(Lambert(vert));
-
                     Vector3[] vertex = new Vector3[3];
                     for (int i = 0; i < 3; i++)
                         vertex[i] = polyhedron.points[polygon.indexes[i]];
+                    var pol = polygon.normal;
+                    polygon.normal = NormolizeVectorCrossProduct(vertex[0], vertex[1], vertex[2]);
+                }
+            }
+
+            foreach (Polyhedron polyhedron in polyhedrons)
+            {
+                CalculateNormalForVertex(polyhedron);
+                foreach (var polygon in polyhedron.polygons)
+                {
+                    Vector3[] vertex = new Vector3[3];
+                    for (int i = 0; i < 3; i++)
+                        vertex[i] = polyhedron.points[polygon.indexes[i]];
+
+                    foreach (var vert in polygon.ListVertexNormal)
+                        polygon.lightness.Add(Lambert(vert));
 
                     var p1 = vertex[0];
                     p1.X = (int)(map.Width / 2 + p1.X * 100 + polyhedron.point.X * 100);
@@ -1454,6 +1507,7 @@ namespace Rogalik_s_3D
             pictureBox.Image = map;
         }
 
+        // ƒ‡Î¸¯Â ÌÂ ÎÂÁ¸ Û·¸∏Ú!!! //
         private int Visibility(Vector3 point, ref double[] upHorizon, ref double[] downHorizon)
         {
             if (point.X < 0 || point.X > map.Width)
@@ -1517,6 +1571,7 @@ namespace Rogalik_s_3D
             return Math.Sqrt(x*x + y*y + 1);
         }
 
+        List<List<Vector3>> lines = new List<List<Vector3>>();
         private void GraphRasterbutton_Click(object sender, EventArgs e)
         {
             graphics.Clear(pictureBox.BackColor);
@@ -1553,12 +1608,26 @@ namespace Rogalik_s_3D
                         if (Visibility(previous, ref upHorizon, ref downHorizon) != 0)
                         {
                             DrawLineV(previous, current);
+                            Vector3 c;
+                            c.X = previous.X;
+                            c.Y = previous.Y + 5;
+                            c.Z = 0;
+                            DrawLineV(previous, c);
+                            DrawLineV(c, current);
+                            lines.Add(new List<Vector3> { previous, current, c });
                             updateHorizons(previous, current, ref upHorizon, ref downHorizon);
                         }
                         else
                         {
                             var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
-                            DrawLine(current, mid);
+                            DrawLineV(current, mid); 
+                            Vector3 c;
+                            c.X = mid.X;
+                            c.Y = mid.Y + 5;
+                            c.Z = 0;
+                            DrawLineV(mid, c);
+                            DrawLineV(c, current);
+                            lines.Add(new List<Vector3> { current, mid, c });
                             updateHorizons(current, mid, ref upHorizon, ref downHorizon);
                         }
 
@@ -1567,13 +1636,27 @@ namespace Rogalik_s_3D
                     {
                         if (Visibility(previous, ref upHorizon, ref downHorizon) == 0)
                         {
-                            DrawLine(previous, current);
+                            DrawLineV(previous, current);
+                            Vector3 c;
+                            c.X = previous.X;
+                            c.Y = previous.Y + 5;
+                            c.Z = 0;
+                            DrawLineV(previous, c);
+                            DrawLineV(c, current);
+                            lines.Add(new List<Vector3> { previous, current, c });
                             updateHorizons(previous, current, ref upHorizon, ref downHorizon);
                         }
                         else
                         {
                             var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
-                            DrawLine(current, mid);
+                            DrawLineV(current, mid);
+                            Vector3 c;
+                            c.X = mid.X;
+                            c.Y = mid.Y + 5;
+                            c.Z = 0;
+                            DrawLineV(mid, c);
+                            DrawLineV(c, current);
+                            lines.Add(new List<Vector3> { current, mid, c });
                             updateHorizons(current, mid, ref upHorizon, ref downHorizon);
                         }
 
@@ -1583,13 +1666,27 @@ namespace Rogalik_s_3D
                         if (Visibility(previous, ref upHorizon, ref downHorizon) == 1)
                         {
                             var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
-                            DrawLine(previous, mid);
+                            DrawLineV(previous, mid);
+                            Vector3 c;
+                            c.X = mid.X;
+                            c.Y = mid.Y + 5;
+                            c.Z = 0;
+                            DrawLineV(previous, c);
+                            DrawLineV(c, mid);
+                            lines.Add(new List<Vector3> { previous, mid, c });
                             updateHorizons(previous, mid, ref upHorizon, ref downHorizon);
                         }
                         else if (Visibility(previous, ref upHorizon, ref downHorizon) == -1)
                         {
                             var mid = intersect(current, previous, ref upHorizon, ref downHorizon);
-                            DrawLine(previous, mid);
+                            DrawLineV(previous, mid);
+                            Vector3 c;
+                            c.X = mid.X;
+                            c.Y = mid.Y + 5;
+                            c.Z = 0;
+                            DrawLineV(previous, c);
+                            DrawLineV(c, mid);
+                            lines.Add(new List<Vector3> { previous, mid, c });
                             updateHorizons(previous, mid, ref upHorizon, ref downHorizon);
                         }
                     }
@@ -1597,8 +1694,30 @@ namespace Rogalik_s_3D
                     previous = current;
                 }
             }
-
+            addGraph();
             pictureBox.Image = map;
+        }
+
+        private void addGraph()
+        {
+            Vector3[] points = new Vector3[lines.Count * 3];
+            int k = 0;
+            int i = 0;
+            Polygon[] polygons = new Polygon[lines.Count];
+            foreach (var line in lines) 
+            {
+                Polygon poly = new Polygon(new int[] { k, k + 1, k + 2 });
+                polygons[i] = poly;
+                i++;
+                foreach (var l in line)
+                {
+                    points[k] = l;
+                    k++;
+                }
+            }
+
+            Polyhedron polyhedron = new Polyhedron(new Vector3(0, 0, 0), points, polygons);
+            polyhedrons.Add(polyhedron);
         }
     }
 }
